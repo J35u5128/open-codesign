@@ -11,12 +11,24 @@ import { looksLikeClaudeOAuthToken, withClaudeCodeIdentity } from './claude-code
 /**
  * Gemini: Endpoint y headers para validación.
  * Se usa el endpoint oficial REST con x-goog-api-key en headers.
+ *
+ * Requisitos:
+ * - Mantener compatibilidad con el endpoint oficial.
+ * - Evitar expresiones regulares costosas sobre entrada no controlada.
+ * - Soportar opcionalmente un baseUrl personalizado.
  */
 function geminiEndpoint(baseUrl?: string) {
-  const root =
-    baseUrl && baseUrl.trim().length > 0
-      ? baseUrl.replace(/\/+$/, '')
-      : 'https://generativelanguage.googleapis.com';
+  const FALLBACK_ROOT = 'https://generativelanguage.googleapis.com';
+
+  const trimmed = baseUrl?.trim() ?? '';
+  let root = trimmed.length > 0 ? trimmed : FALLBACK_ROOT;
+
+  // Elimina únicamente los '/' finales en tiempo lineal, sin regex.
+  // Esto evita riesgos de rendimiento con cadenas largas controladas por usuario.
+  while (root.endsWith('/')) {
+    root = root.slice(0, -1);
+  }
+
   return {
     url: `${root}/v1beta/models`,
     headers: (apiKey: string) => ({ 'x-goog-api-key': apiKey.trim() }),
