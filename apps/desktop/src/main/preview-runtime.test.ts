@@ -24,9 +24,12 @@ async function canRunChrome(): Promise<boolean> {
   }
 }
 
+const RUN_REAL_BROWSER_TESTS = process.env['RUN_REAL_BROWSER_TESTS'] === 'true';
 const chromeAvailable = await canRunChrome();
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-const describeIfChrome = chromeAvailable ? describe : describe.skip;
+// La suite de tests con Chrome real solo correrá si:
+//   - Chrome está disponible
+//   - Y el usuario ha puesto RUN_REAL_BROWSER_TESTS=true
+const describeIfChrome = chromeAvailable && RUN_REAL_BROWSER_TESTS ? describe : describe.skip;
 
 let tempDir = '';
 
