@@ -10,6 +10,7 @@ import { CommentChipBar } from './chat/CommentChipBar';
 import { EmptyState } from './chat/EmptyState';
 import { PromptInput, type PromptInputHandle } from './chat/PromptInput';
 import { ModelSwitcher } from './ModelSwitcher';
+import { Toggle, ToggleGroup } from '@open-codesign/ui';
 
 export interface SidebarProps {
   prefillPrompt: { id: number; text: string } | null;
@@ -99,6 +100,8 @@ export function Sidebar({ prefillPrompt }: SidebarProps) {
   const _sidebarCollapsed = useCodesignStore((s) => s.sidebarCollapsed);
   const _setSidebarCollapsed = useCodesignStore((s) => s.setSidebarCollapsed);
   const sendPrompt = useCodesignStore((s) => s.sendPrompt);
+  const generationMode = useCodesignStore((s) => s.generationMode);
+  const setGenerationMode = useCodesignStore((s) => s.setGenerationMode);
 
   const promptInputRef = useRef<PromptInputHandle>(null);
   const handlePickStarter = (starterPrompt: string): void => {
@@ -116,9 +119,9 @@ export function Sidebar({ prefillPrompt }: SidebarProps) {
     (text: string): void => {
       const trimmed = text.trim();
       if (!trimmed || isGenerating) return;
-      void sendPrompt({ prompt: trimmed });
+      void sendPrompt({ prompt: trimmed, generationMode });
     },
-    [isGenerating, sendPrompt],
+    [isGenerating, sendPrompt, generationMode],
   );
 
   const designSystem = config?.designSystem ?? null;
@@ -161,6 +164,23 @@ export function Sidebar({ prefillPrompt }: SidebarProps) {
 
       {/* Skill chips + prompt input + model/tokens line */}
       <div className="border-t border-[var(--color-border-subtle)] px-[var(--space-4)] pt-[var(--space-3)] pb-[var(--space-3)] space-y-[10px] bg-[var(--color-background-secondary)]">
+        {/* MODO DE GENERACIÓN */}
+        <div className="mb-[8px] flex items-center gap-3">
+          <span className="text-xs text-[var(--color-text-secondary)]">Modo:</span>
+          <ToggleGroup
+            type="single"
+            value={generationMode}
+            onValueChange={v => setGenerationMode(v === 'agentic' || v === 'one_shot' ? v : 'agentic')}
+            className="bg-[var(--color-background-tertiary)] rounded-lg"
+          >
+            <Toggle value="agentic" className="px-[10px] py-[4px] data-[state=on]:bg-[var(--color-surface)] data-[state=on]:text-[var(--color-text-primary)]">
+              Agentic
+            </Toggle>
+            <Toggle value="one_shot" className="px-[10px] py-[4px] data-[state=on]:bg-[var(--color-surface)] data-[state=on]:text-[var(--color-text-primary)]">
+              One-shot
+            </Toggle>
+          </ToggleGroup>
+        </div>
         <CommentChipBar />
         <PromptInput
           ref={promptInputRef}

@@ -176,6 +176,9 @@ export type SelectedElement = z.infer<typeof SelectedElement>;
 // to alphanumerics + `_`/`-` so it cannot carry LF/CR into a log line (defense
 // in depth — log formatting also escapes, but belt-and-braces for payloads
 // that become `runId` fields via AsyncLocalStorage).
+export const GenerationMode = z.enum(['agentic', 'one_shot']);
+export type GenerationMode = z.infer<typeof GenerationMode>;
+
 const GenerationId = z
   .string()
   .min(1)
@@ -192,12 +195,9 @@ export const GeneratePayloadV1 = z
     referenceUrl: z.string().url().optional(),
     attachments: z.array(LocalInputFile).max(12).default([]),
     generationId: GenerationId,
-    /** Required in v0.2: every generation belongs to a workspace-backed design. */
     designId: z.string().min(1),
-    /** Current design source for this design (if any). Seeded into the
-     *  virtual FS at `App.jsx` so the edit tool can view/edit incrementally
-     *  instead of always rewriting from scratch. */
     previousSource: z.string().optional(),
+    generationMode: GenerationMode.default('agentic'),
   })
   .strict();
 export type GeneratePayloadV1 = z.infer<typeof GeneratePayloadV1>;

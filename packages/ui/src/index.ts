@@ -1,4 +1,7 @@
 // Fonts are loaded once via the dedicated `@open-codesign/ui/fonts` entry point
+export { Toggle } from './Toggle';
+export { ToggleGroup } from './ToggleGroup';
+
 // (see apps/desktop/src/renderer/src/main.tsx). Do not re-import them here.
 
 export type { ButtonProps } from './components/Button';

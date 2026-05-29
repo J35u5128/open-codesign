@@ -12,6 +12,7 @@ import {
   formatRunProtocolPreflightAnswers,
   type GenerateImageAssetRequest,
   type GenerateImageAssetResult,
+  generateOneShot,
   generateTitle,
   generateViaAgent,
   inspectWorkspaceFiles,
@@ -442,6 +443,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
       onAggressivePrune?: () => void;
       onComplete?: (messages: DesignBriefConversationMessages) => void;
     },
+    generationMode: 'agentic' | 'one_shot' = 'agentic',
   ): ReturnType<typeof generateViaAgent> => {
     const sendEvent = (event: AgentStreamEvent) => {
       getMainWindow()?.webContents.send('agent:event:v1', event);
@@ -530,6 +532,23 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
     let turnTextBuffer = '';
     let toolCount = 0;
 
+    if (generationMode === 'one_shot') {
+      return generateOneShot(
+        {
+          ...input,
+        },
+        {
+          ...(memoryCallbacks?.onAggressivePrune !== undefined
+            ? { onAggressivePrune: memoryCallbacks.onAggressivePrune }
+            : {}),
+          ...(memoryCallbacks?.onComplete !== undefined
+            ? { onComplete: memoryCallbacks.onComplete }
+            : {}),
+        }
+      );
+    }
+
+    // Modo agentic original
     return generateViaAgent(
       {
         ...input,

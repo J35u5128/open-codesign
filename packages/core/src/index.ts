@@ -481,6 +481,8 @@ export function reasoningForModel(
   }
 }
 
+export { generateOneShot } from './generate-one-shot.js';
+
 export async function applyComment(
   input: ApplyCommentInput,
   deps: GenerateViaAgentDeps = {},

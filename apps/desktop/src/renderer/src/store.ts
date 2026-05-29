@@ -103,6 +103,7 @@ export type SettingsTab =
   | 'advanced';
 export type HubTab = 'recent' | 'all' | 'examples' | 'resources';
 export type InteractionMode = 'default' | 'comment';
+export type GenerationMode = 'agentic' | 'one_shot';
 export type PreviewViewport = 'desktop' | 'tablet' | 'mobile';
 export type PreviewZoomMode = 'manual' | 'fit';
 
@@ -184,6 +185,9 @@ export interface CodesignState {
   previewZoom: number;
   previewZoomMode: PreviewZoomMode;
   interactionMode: InteractionMode;
+  /** Agent runtime mode: full agent loop or single response */
+  generationMode: GenerationMode;
+  setGenerationMode: (mode: GenerationMode) => void;
   // Sidebar v2 chat state
   chatMessages: ChatMessageRow[];
   chatLoaded: boolean;
@@ -268,6 +272,8 @@ export interface CodesignState {
      *  visible as a user message — the agent still receives it and responds
      *  normally, but the chat transcript reads as one continuous run. */
     silent?: boolean | undefined;
+    /** Agent runtime mode: full agent loop or single response */
+    generationMode?: GenerationMode;
   }) => Promise<void>;
   syncGenerationStatus: () => Promise<void>;
   markGenerationRunning: (designId: string, generationId: string, stage?: GenerationStage) => void;
@@ -492,6 +498,7 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
   previewZoom: 100,
   previewZoomMode: 'fit' as PreviewZoomMode,
   interactionMode: 'default' as InteractionMode,
+  generationMode: 'agentic' as GenerationMode,
   chatMessages: [],
   chatLoaded: false,
   sidebarCollapsed: false,
@@ -699,6 +706,10 @@ export const useCodesignStore = create<CodesignState>((set, get) => ({
     } else {
       set({ interactionMode: mode });
     }
+  },
+
+  setGenerationMode(mode: GenerationMode) {
+    set({ generationMode: mode });
   },
 
   setTheme(theme) {
