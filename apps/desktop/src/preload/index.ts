@@ -399,21 +399,8 @@ const api = {
     ipcRenderer.invoke('done:verify:v1', { artifact }) as Promise<{
       errors: Array<{ message: string; source?: string; lineno?: number }>;
     }>,
-  generate: (payload: {
-    prompt: string;
-    history: ChatMessage[];
-    model: ModelRef;
-    baseUrl?: string;
-    referenceUrl?: string;
-    attachments: LocalInputFile[];
-    generationId: string;
-    designId: string;
-    previousSource?: string;
-  }) =>
-    ipcRenderer.invoke('codesign:v1:generate', {
-      schemaVersion: 1,
-      ...payload,
-    } satisfies GeneratePayloadV1) as Promise<GenerateResponse>,
+  generate: (payload: GeneratePayloadV1) =>
+    ipcRenderer.invoke('codesign:v1:generate', payload) as Promise<GenerateResponse>,
   cancelGeneration: (generationId: string) =>
     ipcRenderer.invoke('codesign:v1:cancel-generation', {
       schemaVersion: 1,

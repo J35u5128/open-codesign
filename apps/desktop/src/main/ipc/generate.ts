@@ -1060,9 +1060,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
                   ...(baseUrl !== undefined ? { baseUrl } : {}),
                   wire: active.wire,
                   ...(active.httpHeaders !== undefined ? { httpHeaders: active.httpHeaders } : {}),
-                  ...(active.reasoningLevel !== undefined
-                    ? { reasoningLevel: active.reasoningLevel }
-                    : {}),
+                  ...(active.reasoningLevel !== undefined ? { reasoningLevel: active.reasoningLevel } : {}),
                   ...(allowKeyless ? { allowKeyless: true } : {}),
                   signal: controller.signal,
                   logger: coreLogger,
@@ -1080,6 +1078,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
                     capturedMessages = messages;
                   },
                 },
+                    payload.generationMode === 'one_shot' ? 'one_shot' : 'agentic', 
               ),
             );
             logIpc.info('generate.ok', {

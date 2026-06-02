@@ -8,6 +8,7 @@ import type {
 } from '@open-codesign/shared';
 import { DEFAULT_SOURCE_ENTRY, LEGACY_SOURCE_ENTRY } from '@open-codesign/shared';
 import type { CodesignApi, ExportFormat } from '../../../../preload/index.js';
+import type { GenerationMode } from '@open-codesign/shared';
 import { recordAction } from '../../lib/action-timeline.js';
 import { redactUrls } from '../../lib/redact.js';
 import { workspacePathComparisonKey } from '../../lib/workspace-path.js';
@@ -51,6 +52,14 @@ type SetState = (
   updater: ((state: CodesignState) => Partial<CodesignState> | object) | Partial<CodesignState>,
 ) => void;
 type GetState = () => CodesignState;
+
+// --- Gestión explícita de generationMode ---
+export type { GenerationMode };
+
+// Extendemos localmente el tipo CodesignApi['generate'] para incluir generationMode opcional.
+type GeneratePayloadWithMode = Parameters<CodesignApi['generate']>[0] & {
+  generationMode?: GenerationMode;
+};
 
 type ProviderFixPatch = {
   baseUrl?: string;
@@ -299,7 +308,7 @@ export interface PendingEditEnrichment {
 }
 
 function escapeUntrustedXml(text: string): string {
-  return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return text.replaceAll('&', '&').replaceAll('<', '<').replaceAll('>', '>');
 }
 
 function formatPendingEditTarget(
@@ -650,7 +659,7 @@ async function runGenerate(
   get: GetState,
   set: SetState,
   generationId: string,
-  payload: Parameters<CodesignApi['generate']>[0],
+  payload: GeneratePayloadWithMode,
   designIdAtStart: string | null,
 ): Promise<void> {
   advanceStageIfCurrent(get, set, generationId, 'thinking');
@@ -659,28 +668,59 @@ async function runGenerate(
   advanceStageIfCurrent(get, set, generationId, 'streaming');
   const api = window.codesign;
   if (!api) throw new Error(tr('errors.rendererDisconnected'));
-  const result = await api.generate(payload);
-  // Response fully received — move through parsing → rendering before finalising.
-  advanceStageIfCurrent(get, set, generationId, 'parsing');
-  advanceStageIfCurrent(get, set, generationId, 'rendering');
-  applyGenerateSuccess(
-    set,
-    get,
-    generationId,
-    payload.prompt,
-    result as {
-      artifacts: Array<{ type?: string; content: string; entryPath?: string }>;
-      message: string;
-      inputTokens?: number;
-      outputTokens?: number;
-      costUsd?: number;
-      resourceState?: ResourceStateV1;
-    },
-    designIdAtStart,
-  );
+  // Se llama a distintas funciones según el modo elegido
+  if (payload.generationMode === 'one_shot') {
+    // Generación directa sin chat visible (solo aplica el diseño)
+    const result = await api.generate(payload);
+
+    // Aplicamos el diseño pero suprimimos mensaje visible
+    applyGenerateSuccess(
+      set,
+      get,
+      generationId,
+      payload.prompt,
+      {
+        ...result,
+        message: '', // ← evita mostrar texto del modelo en el panel izquierdo
+      } as {
+        artifacts: Array<{ type?: string; content: string; entryPath?: string }>;
+        message: string;
+        inputTokens?: number;
+        outputTokens?: number;
+        costUsd?: number;
+        resourceState?: ResourceStateV1;
+      },
+      designIdAtStart,
+    );
+
+    if (designIdAtStart !== null) {
+      finishGenerationForDesign(set, designIdAtStart, generationId, 'done');
+    }
+  } else {
+    // Modo agentic usual con streaming y eventos
+    const result = await api.generate(payload);
+    advanceStageIfCurrent(get, set, generationId, 'parsing');
+    advanceStageIfCurrent(get, set, generationId, 'rendering');
+    applyGenerateSuccess(
+      set,
+      get,
+      generationId,
+      payload.prompt,
+      result as {
+        artifacts: Array<{ type?: string; content: string; entryPath?: string }>;
+        message: string;
+        inputTokens?: number;
+        outputTokens?: number;
+        costUsd?: number;
+        resourceState?: ResourceStateV1;
+      },
+      designIdAtStart,
+    );
+  }
 }
 
 interface GenerationSliceActions {
+  setGenerationMode: (mode: GenerationMode) => void;
   sendPrompt: CodesignState['sendPrompt'];
   syncGenerationStatus: CodesignState['syncGenerationStatus'];
   markGenerationRunning: CodesignState['markGenerationRunning'];
@@ -694,6 +734,10 @@ interface GenerationSliceActions {
 
 export function makeGenerationSlice(set: SetState, get: GetState): GenerationSliceActions {
   return {
+    setGenerationMode(mode: GenerationMode) {
+      set({ generationMode: mode });
+    },
+
     async syncGenerationStatus() {
       if (!window.codesign?.generationStatus) return;
       const status = await window.codesign.generationStatus();
@@ -726,6 +770,20 @@ export function makeGenerationSlice(set: SetState, get: GetState): GenerationSli
           hasAttachments: (input.attachments?.length ?? 0) > 0,
         },
       });
+
+      // Respetamos generationMode si viene en input, sino usamos el del estado, o 'agentic' default
+      const { generationMode } = input as { generationMode?: GenerationMode };
+      // Fallback seguro: si el store aún no tiene generationMode, usamos 'agentic'
+      let mode: GenerationMode = 'agentic';
+      if (generationMode !== undefined) {
+        mode = generationMode;
+      } else {
+        const state = get() as Partial<CodesignState> & { generationMode?: GenerationMode };
+        if (state.generationMode !== undefined) {
+          mode = state.generationMode;
+        }
+      }
+
       if (!window.codesign) {
         const msg = tr('errors.rendererDisconnected');
         set({ errorMessage: msg, lastError: msg });
@@ -859,6 +917,7 @@ export function makeGenerationSlice(set: SetState, get: GetState): GenerationSli
           set,
           generationId,
           {
+            schemaVersion: 1,
             prompt: enrichedPrompt,
             history,
             model: modelRef(cfg.provider, cfg.modelPrimary),
@@ -867,6 +926,7 @@ export function makeGenerationSlice(set: SetState, get: GetState): GenerationSli
             generationId,
             designId: designIdAtStart,
             ...(get().previewSource ? { previousSource: get().previewSource as string } : {}),
+            generationMode: mode,
           },
           designIdAtStart,
         );
