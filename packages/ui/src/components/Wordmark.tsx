@@ -43,8 +43,8 @@ export function Wordmark({ badge, size = 'md' }: WordmarkProps) {
             letterSpacing: '0',
           }}
         >
-          <span style={{ color: '#142d4c' }}>Open </span>
-          <span style={{ color: '#b5441a' }}>CoDesign</span>
+          <span style={{ color: 'var(--color-text-primary)' }}>Open </span>
+          <span style={{ color: 'var(--color-accent)' }}>CoDesign</span>
         </span>
         {badge ? (
           <span
@@ -53,7 +53,7 @@ export function Wordmark({ badge, size = 'md' }: WordmarkProps) {
               fontFamily: 'var(--font-mono)',
               fontSize: metrics.badgeSize,
               letterSpacing: '0.12em',
-              color: '#9a8a7c',
+              color: 'var(--color-text-muted)',
               marginTop: metrics.badgeMarginTop,
             }}
           >
