@@ -549,9 +549,18 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
           withStableWorkspacePath(designId, () =>
             readWorkspaceFilesAt(currentWorkspaceRoot(), patterns),
           ),
-        runPreview: ({ path, vision }) =>
+        runPreview: (args: {
+          path: string;
+          vision: boolean;
+          viewport?: 'desktop' | 'tablet' | 'mobile';
+        }) =>
           withStableWorkspacePath(designId, () =>
-            runPreview({ path, vision, workspaceRoot: currentWorkspaceRoot() }),
+            runPreview({
+              path: args.path,
+              vision: args.vision,
+              workspaceRoot: currentWorkspaceRoot(),
+              ...(args.viewport !== undefined ? { viewport: args.viewport } : {}),
+            }),
           ),
       },
       {

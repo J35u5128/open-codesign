@@ -198,6 +198,8 @@ export const GeneratePayloadV1 = z
      *  virtual FS at `App.jsx` so the edit tool can view/edit incrementally
      *  instead of always rewriting from scratch. */
     previousSource: z.string().optional(),
+    /** Nueva opción: viewport para control responsivo (desktop/tablet/mobile) */
+    viewport: z.enum(['desktop', 'tablet', 'mobile']).optional(),
   })
   .strict();
 export type GeneratePayloadV1 = z.infer<typeof GeneratePayloadV1>;

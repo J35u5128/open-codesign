@@ -19,6 +19,9 @@ import { type Static, Type } from '@sinclair/typebox';
 export const PreviewInput = Type.Object({
   path: Type.String({ description: 'Workspace-relative artifact path.' }),
   vision: Type.Optional(Type.Boolean()),
+  viewport: Type.Optional(
+    Type.Union([Type.Literal('desktop'), Type.Literal('tablet'), Type.Literal('mobile')]),
+  ),
 });
 export type PreviewInput = Static<typeof PreviewInput>;
 
@@ -84,7 +87,11 @@ function previewContent(summary: string, result: PreviewResult): Array<TextConte
  *  a structured runtime report. Kept distinct from `DoneRuntimeVerifier` so
  *  preview's wire shape can evolve independently from done's lint + console
  *  error contract. */
-export type RunPreviewFn = (opts: { path: string; vision: boolean }) => Promise<PreviewResult>;
+export type RunPreviewFn = (opts: {
+  path: string;
+  vision: boolean;
+  viewport?: 'desktop' | 'tablet' | 'mobile';
+}) => Promise<PreviewResult>;
 
 export function makePreviewTool(
   runPreview: RunPreviewFn,
@@ -104,7 +111,11 @@ export function makePreviewTool(
     async execute(_toolCallId, params): Promise<AgentToolResult<PreviewResult>> {
       const vision = params.vision ?? defaultVision;
       try {
-        const raw = await runPreview({ path: params.path, vision });
+        const raw = await runPreview({
+          path: params.path,
+          vision,
+          viewport: (params.viewport ?? 'desktop') as 'desktop' | 'tablet' | 'mobile',
+        });
         const result = trimPreviewResult(raw);
         const summary = result.ok
           ? `preview ok: ${result.metrics.nodes} nodes, ${result.consoleErrors.length} console errors, ${result.assetErrors.length} asset errors`

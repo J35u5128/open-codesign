@@ -16,6 +16,8 @@ const ZOOM_OPTIONS = [50, 75, 90, 100, 110, 125, 150, 175, 200] as const;
 export function PreviewToolbar(): ReactElement {
   const t = useT();
   const previewSource = useCodesignStore((s) => s.previewSource);
+  const previewViewport = useCodesignStore((s) => s.previewViewport);
+  const setPreviewViewport = useCodesignStore((s) => s.setPreviewViewport);
   const exportActive = useCodesignStore((s) => s.exportActive);
   const toastMessage = useCodesignStore((s) => s.toastMessage);
   const dismissToast = useCodesignStore((s) => s.dismissToast);
@@ -91,6 +93,21 @@ export function PreviewToolbar(): ReactElement {
 
   return (
     <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-[var(--space-1)] pr-[var(--space-4)] py-[3px]">
+      <div className="flex items-center gap-2 mr-4">
+        <label htmlFor="viewport-selector" className="text-xs text-[var(--color-text-secondary)]">
+          Dimensions:
+        </label>
+        <select
+          id="viewport-selector"
+          value={previewViewport}
+          onChange={(e) => setPreviewViewport(e.target.value as 'desktop' | 'mobile' | 'tablet')}
+          className="border rounded-[6px] px-2 py-0.5 text-xs"
+        >
+          <option value="desktop">Desktop</option>
+          <option value="tablet">Tablet</option>
+          <option value="mobile">Mobile</option>
+        </select>
+      </div>
       {toastMessage && (
         <output className="mr-auto text-[var(--text-xs)] text-[var(--color-text-secondary)] truncate max-w-[60%]">
           {toastMessage}

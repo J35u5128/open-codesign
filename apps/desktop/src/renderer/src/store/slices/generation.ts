@@ -854,22 +854,20 @@ export function makeGenerationSlice(set: SetState, get: GetState): GenerationSli
       });
 
       try {
-        await runGenerate(
-          get,
-          set,
+        const currentViewport = get().previewViewport;
+        const basePayload = {
+          prompt: enrichedPrompt,
+          history,
+          model: modelRef(cfg.provider, cfg.modelPrimary),
+          ...(request.referenceUrl ? { referenceUrl: request.referenceUrl } : {}),
+          attachments: request.attachments,
           generationId,
-          {
-            prompt: enrichedPrompt,
-            history,
-            model: modelRef(cfg.provider, cfg.modelPrimary),
-            ...(request.referenceUrl ? { referenceUrl: request.referenceUrl } : {}),
-            attachments: request.attachments,
-            generationId,
-            designId: designIdAtStart,
-            ...(get().previewSource ? { previousSource: get().previewSource as string } : {}),
-          },
-          designIdAtStart,
-        );
+          designId: designIdAtStart,
+          ...(get().previewSource ? { previousSource: get().previewSource as string } : {}),
+          viewport: currentViewport,
+        } as const;
+        const payload = basePayload as unknown as Parameters<CodesignApi['generate']>[0];
+        await runGenerate(get, set, generationId, payload, designIdAtStart);
         // After a successful generate, persistDesignState (called inside
         // applyGenerateSuccess) creates the new snapshot and updates
         // currentSnapshotId via loadCommentsForCurrentDesign. Mark any pending

@@ -37,7 +37,13 @@ const LOAD_TIMEOUT_MS = 15_000;
 const SETTLE_AFTER_LOAD_MS = 800;
 const MAX_CONSOLE_ENTRIES = 50;
 const MAX_ASSET_ERRORS = 20;
-const DEFAULT_VIEWPORT = { width: 1280, height: 800 } as const;
+const VIEWPORTS = {
+  desktop: { width: 1440, height: 900 },
+  tablet: { width: 768, height: 1024 },
+  mobile: { width: 375, height: 812 },
+} as const;
+
+const DEFAULT_VIEWPORT = VIEWPORTS.desktop;
 const RUNTIME_FONT_FAMILY_PREFIXES = [
   'Fraunces:',
   'DM Serif Display:',
@@ -51,7 +57,9 @@ const RUNTIME_FONT_PATH_PREFIXES = [
   '/s/jetbrainsmono/',
 ] as const;
 
-export async function runPreview(opts: RunPreviewOptions): Promise<PreviewResult> {
+export async function runPreview(
+  opts: RunPreviewOptions & { viewport?: keyof typeof VIEWPORTS },
+): Promise<PreviewResult> {
   const absWorkspace = resolve(opts.workspaceRoot);
   let source: string;
   let sourcePath = opts.path;
@@ -125,7 +133,7 @@ export async function runPreview(opts: RunPreviewOptions): Promise<PreviewResult
       ],
     });
     page = await browser.newPage();
-    await page.setViewport(DEFAULT_VIEWPORT);
+    await page.setViewport(opts.viewport ? VIEWPORTS[opts.viewport] : DEFAULT_VIEWPORT);
 
     page.on('console', (msg: ConsoleMessage) => {
       if (consoleErrors.length >= MAX_CONSOLE_ENTRIES) return;

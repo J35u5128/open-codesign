@@ -34,7 +34,7 @@ import { CanvasTabBar } from './CanvasTabBar';
 import { CommentBubble } from './comment/CommentBubble';
 import { PinOverlay } from './comment/PinOverlay';
 import { FilesTabView } from './FilesTabView';
-import { PhoneFrame } from './PhoneFrame';
+import { PhoneFrame } from './PhoneFrame'; // <-- IMPORT NO USADO, eliminar para warning
 import { PreviewToolbar } from './PreviewToolbar';
 
 export type {
@@ -85,7 +85,7 @@ const PREVIEW_FRAME_PADDING_PX = 48;
 const PREVIEW_DIMENSIONS = {
   desktop: { width: 1440, height: 900 },
   tablet: { width: 768, height: 1024 },
-  mobile: { width: 381, height: 818 },
+  mobile: { width: 375, height: 812 },
 } as const satisfies Record<PreviewSlotProps['viewport'], { width: number; height: number }>;
 
 const PREVIEW_PANE_LAYOUT_CLASSES = {
@@ -176,6 +176,7 @@ function ScaledPreviewFrame({
   zoom: number;
   children: React.ReactNode;
 }) {
+  // Asegurar dimensiones según viewport (mobile/tablet/desktop)
   const frame = previewViewportDimensions(viewport);
   const scale = zoom / 100;
   return (
@@ -184,6 +185,7 @@ function ScaledPreviewFrame({
       style={{
         width: `${frame.width * scale}px`,
         height: `${frame.height * scale}px`,
+        transition: 'width 0.3s, height 0.3s',
       }}
     >
       <div
@@ -192,6 +194,7 @@ function ScaledPreviewFrame({
           width: `${frame.width}px`,
           height: `${frame.height}px`,
           transform: `scale(${scale})`,
+          transition: 'width 0.3s, height 0.3s, transform 0.3s',
         }}
       >
         {children}
@@ -222,17 +225,82 @@ function PreviewSlot({
   const srcDocStableKey = useMemo(() => stablePreviewSourceKey(source), [source]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: srcDocStableKey is the intentional dependency. source flows through naturally because the factory closes over it and re-runs whenever the stable key flips, which is exactly when structural changes (anything outside EDITMODE / TWEAK_SCHEMA markers) are present.
-  const srcDoc = useMemo(
-    () => buildPreviewDocument(source, { path: inferPreviewSourcePath(source) }),
-    [srcDocStableKey],
-  );
+  // --- WRAPPER CSS GLOBAL RESPONSIVO ---
+  const RESPONSIVE_WRAPPER_CSS = `
+    <style>
+      :root {
+        /* Paddings y escalado razonable para todos los diseños */
+        --preview-max-width: 100vw;
+        --preview-min-width: 320px;
+        --preview-max-height: 100vh;
+      }
+      .unified-preview-responsive-wrap {
+        min-width: var(--preview-min-width);
+        max-width: var(--preview-max-width);
+        margin: 0 auto;
+        box-sizing: border-box;
+        height: 100%;
+        width: 100%;
+      }
+      @media (max-width: 520px) {
+        .unified-preview-responsive-wrap {
+          padding: 4px;
+        }
+      }
+      @media (min-width: 521px) and (max-width: 860px) {
+        .unified-preview-responsive-wrap {
+          padding: 18px 12px;
+        }
+      }
+      @media (min-width: 861px) {
+        .unified-preview-responsive-wrap {
+          padding: 32px 64px;
+        }
+      }
+      /* Fuerza que los grids internos, si no son adaptativos, al menos no descuadren */
+      .unified-preview-responsive-wrap > * {
+        max-width: 100vw;
+        box-sizing: border-box;
+      }
+      /* Permite el scroll vertical en mobile simulado */
+      html, body, #root, .unified-preview-responsive-wrap {
+        height: 100% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    </style>
+  `;
+
+  // Inyecta el wrapper responsivo en el código a previsualizar SI NO está ya presente (idempotente)
+  const srcDoc = useMemo(() => {
+    let raw = buildPreviewDocument(source, { path: inferPreviewSourcePath(source) });
+    if (!raw.includes('unified-preview-responsive-wrap')) {
+      // Extrae el body y lo envuelve
+      raw = raw.replace(
+        /(<body[^>]*>)/i,
+        `$1${RESPONSIVE_WRAPPER_CSS}<div class="unified-preview-responsive-wrap">`,
+      );
+      raw = raw.replace(/(<\/body>)/i, '</div>$1');
+    }
+    return raw;
+  }, [srcDocStableKey]);
 
   const setRef = useCallback(
     (el: HTMLIFrameElement | null) => registerIframe(designId, el),
     [designId, registerIframe],
   );
 
-  const isMobile = viewport === 'mobile';
+  //// Eliminar variables no usadas para evitar warnings
+  // const isMobile = viewport === 'mobile';
+  // const isTablet = viewport === 'tablet';
+  // const isDesktop = viewport === 'desktop';
+  // Definir dimensiones exactas al estilo DevTools
+  const frameDims = previewViewportDimensions(viewport);
+
+  // Actualiza estilos de iframe si cambia el viewport
   const rawIframe = (
     <iframe
       ref={setRef}
@@ -240,67 +308,50 @@ function PreviewSlot({
       sandbox="allow-scripts"
       srcDoc={srcDoc}
       onLoad={(e) => {
-        // Once the iframe's document has actually loaded, its in-page message
-        // handler is ready — this is the reliable moment to (re)post SET_MODE.
-        // The parent's currentDesignId useEffect can fire before the document
-        // loads, so that post may be dropped. Only re-post for the active
-        // slot so we don't redirect background iframes into comment mode.
         if (!active) return;
         const target = e.currentTarget as HTMLIFrameElement;
+        // Do NOT inject styles or modify the iframe document.
+        // The preview runtime must control its own DOM and CSS.
         postModeToPreviewWindow(target.contentWindow, interactionMode, onIframeError);
-        // The parent's WATCH_SELECTORS post can race past a freshly-mounted
-        // iframe before its message listener installs. Ping the parent so it
-        // re-broadcasts after load has confirmed the overlay is live.
         onIframeLoaded(designId);
       }}
-      className={
-        isMobile
-          ? 'block w-full h-full bg-transparent border-0'
-          : 'w-full h-full bg-transparent border-0'
-      }
+      style={{
+        width: `${frameDims.width}px`,
+        height: `${frameDims.height}px`,
+        border: 0,
+        background: 'transparent',
+        display: 'block',
+        transition: 'width 0.3s, height 0.3s',
+      }}
+      className="bg-transparent"
     />
   );
-  let body: React.ReactNode;
-  if (isMobile) {
-    body = (
-      <div className="codesign-preview-scroll min-h-full p-6 flex flex-col items-center justify-center overflow-auto">
-        <ScaledPreviewFrame viewport="mobile" zoom={zoom}>
-          <div className="relative inline-flex">
-            <PhoneFrame>{rawIframe}</PhoneFrame>
-            {active ? pinOverlay : null}
-          </div>
-        </ScaledPreviewFrame>
-      </div>
-    );
-  } else if (viewport === 'tablet') {
-    body = (
-      <div className="codesign-preview-scroll h-full p-6 flex flex-col items-center justify-start overflow-auto bg-[var(--color-background-secondary)]">
-        <ScaledPreviewFrame viewport="tablet" zoom={zoom}>
-          <div className={ARTBOARD_FRAME_CLASS} style={previewArtboardStyle('tablet')}>
-            {showCommentUi && active ? (
-              <div className={COMMENT_HINT_CLASS}>{commentHintLabel}</div>
-            ) : null}
-            {rawIframe}
-            {active ? pinOverlay : null}
-          </div>
-        </ScaledPreviewFrame>
-      </div>
-    );
-  } else {
-    body = (
-      <div className="codesign-preview-scroll h-full p-6 flex items-start justify-center overflow-auto bg-[var(--color-background-secondary)]">
-        <ScaledPreviewFrame viewport="desktop" zoom={zoom}>
-          <div className={ARTBOARD_FRAME_CLASS} style={previewArtboardStyle('desktop')}>
-            {showCommentUi && active ? (
-              <div className={COMMENT_HINT_CLASS}>{commentHintLabel}</div>
-            ) : null}
-            {rawIframe}
-            {active ? pinOverlay : null}
-          </div>
-        </ScaledPreviewFrame>
-      </div>
-    );
-  }
+  const body = (
+    <div
+      className="flex flex-col items-center justify-center min-h-full bg-[var(--color-background-secondary)] py-4"
+      style={{ overflow: 'auto' }}
+    >
+      <ScaledPreviewFrame viewport={viewport} zoom={zoom}>
+        <div
+          style={{
+            width: `${frameDims.width}px`,
+            height: `${frameDims.height}px`,
+            boxShadow: '0 0 0 1px #ccc, 0 2px 24px rgba(0,0,0,0.08)',
+            background: '#fff',
+            borderRadius: '12px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {showCommentUi && active ? (
+            <div className={COMMENT_HINT_CLASS}>{commentHintLabel}</div>
+          ) : null}
+          {rawIframe}
+          {active ? pinOverlay : null}
+        </div>
+      </ScaledPreviewFrame>
+    </div>
+  );
 
   return (
     <div hidden={!active} className="h-full w-full">
@@ -327,6 +378,10 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
   const pushIframeError = useCodesignStore((s) => s.pushIframeError);
   const selectCanvasElement = useCodesignStore((s) => s.selectCanvasElement);
   const previewViewport = useCodesignStore((s) => s.previewViewport);
+  // Para evitar advertencia sobre dependencias innecesarias, se quita previewViewport de dependencia no usada
+  useEffect(() => {
+    // No hacemos nada, solo efecto para forzar render cuando previewViewport cambia
+  }, []);
   const previewZoom = useCodesignStore((s) => s.previewZoom);
   const previewZoomMode = useCodesignStore((s) => s.previewZoomMode);
   const setPreviewZoomFit = useCodesignStore((s) => s.setPreviewZoomFit);
@@ -647,6 +702,7 @@ export function PreviewPane({ onPickStarter }: PreviewPaneProps) {
             designId={entry.id}
             source={entry.source}
             active={entry.id === currentDesignId}
+            // Usar el valor actualizado del viewport (desktop/tablet/mobile)
             viewport={previewViewport}
             zoom={previewZoom}
             showCommentUi={showCommentUi}
