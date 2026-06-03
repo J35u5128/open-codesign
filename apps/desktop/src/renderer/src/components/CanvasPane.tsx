@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 /* Eliminada importación de 'cn' porque no existe el módulo '../../utils/classnames' */
 import { type CanvasNode, useCanvasStore } from '../store/slices/canvas';
+import { CanvasModeBar } from './CanvasModeBar';
 import { CanvasToolbar } from './CanvasToolbar';
 import { DesignPreviewFrame } from './DesignPreviewFrame';
 
@@ -32,6 +33,7 @@ function CanvasBackground({ zoom }: { zoom: number }) {
 interface CanvasNodeBoxProps {
   node: CanvasNode;
   selected: boolean;
+  interactionMode: 'preview' | 'select' | 'comment';
   onSelect: (id: string) => void;
   onDrag: (id: string, pos: { x: number; y: number }) => void;
   onResize: (id: string, size: { width: number; height: number }) => void;
@@ -41,6 +43,7 @@ interface CanvasNodeBoxProps {
 function CanvasNodeBox({
   node,
   selected,
+  interactionMode,
   onSelect,
   onDrag,
   onResize,
@@ -59,6 +62,9 @@ function CanvasNodeBox({
   function onDragStart(e: React.MouseEvent) {
     e.stopPropagation();
     if (e.button !== 0) return;
+    // Solo inicio drag con Ctrl, el resto de clics solo seleccionan el nodo.
+    // Así, la experiencia es como Figma/Stitch: click = select, Ctrl+drag = mover.
+    if (!(interactionMode === 'preview' && e.ctrlKey)) return;
     setDragging(true);
     dragOrigin.current = { x: e.clientX, y: e.clientY };
   }
@@ -127,6 +133,14 @@ function CanvasNodeBox({
     <div
       ref={boxRef}
       onClick={(e) => {
+        // Si haces click *sobre el bloque*, seleccionas el nodo,
+        // pero si haces click/adentro del iframe, NO fuerzas selección ni bloqueas la interacción.
+        if (
+          e.target instanceof HTMLIFrameElement ||
+          (e.target instanceof HTMLElement && e.target.closest('iframe'))
+        ) {
+          return;
+        }
         e.stopPropagation();
         onSelect(node.id);
       }}
@@ -154,6 +168,20 @@ function CanvasNodeBox({
         touchAction: 'none',
       }}
     >
+      {/* Capa superior invisible para capturar selección y mostrar handle/resizer y toolbar */}
+      <div
+        style={{
+          position: 'absolute',
+          zIndex: 3,
+          inset: 0,
+          pointerEvents: 'auto',
+          background: 'transparent',
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(node.id);
+        }}
+      />
       <div style={{ width: '100%', height: '100%', position: 'relative', pointerEvents: 'none' }}>
         {children ? (
           <div
@@ -214,6 +242,7 @@ export function CanvasPane() {
     zoom,
     offsetX,
     offsetY,
+    interactionMode,
     setZoom,
     setOffset,
     updateNode,
@@ -367,6 +396,7 @@ export function CanvasPane() {
             key={node.id}
             node={node}
             selected={selectedNodeId === node.id}
+            interactionMode={interactionMode}
             onSelect={selectNode}
             onDrag={handleNodeDrag}
             onResize={handleNodeResize}
@@ -387,6 +417,7 @@ export function CanvasPane() {
           />
         ) : null}
       </div>
+      <CanvasModeBar />
     </div>
   );
 }

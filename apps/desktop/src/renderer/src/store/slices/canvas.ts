@@ -16,12 +16,16 @@ export interface CanvasNode {
   isPrimary?: boolean;
 }
 
+export type CanvasInteractionMode = 'preview' | 'select' | 'comment';
+
 export interface CanvasState {
   nodes: CanvasNode[];
   selectedNodeId: string | null;
   zoom: number;
   offsetX: number;
   offsetY: number;
+  interactionMode: CanvasInteractionMode;
+  setInteractionMode: (mode: CanvasInteractionMode) => void;
   // Actions
   addNode: (node: CanvasNode) => void;
   removeNode: (id: string) => void;
@@ -41,6 +45,8 @@ export const useCanvasStore = create<CanvasState>(((
   zoom: 1,
   offsetX: 0,
   offsetY: 0,
+  interactionMode: 'preview',
+  setInteractionMode: (mode) => set(() => ({ interactionMode: mode })),
   addNode: (node: CanvasNode) => set((state: CanvasState) => ({ nodes: [...state.nodes, node] })),
   removeNode: (id: string) =>
     set((state: CanvasState) => ({
@@ -61,5 +67,6 @@ export const useCanvasStore = create<CanvasState>(((
       zoom: 1,
       offsetX: 0,
       offsetY: 0,
+      interactionMode: 'preview',
     })),
 })) as StateCreator<CanvasState>);
