@@ -47,17 +47,17 @@ export function DesignPreviewFrame({ width, height }: DesignPreviewFrameProps) {
           height: height,
           border: 0,
           background: '#fff',
-          pointerEvents: interactionMode === 'preview' ? 'auto' : 'none',
+          pointerEvents: interactionMode === 'select' ? 'none' : 'auto',
         }}
       />
-      {interactionMode !== 'preview' ? (
+      {interactionMode !== 'select' ? (
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            cursor: interactionMode === 'select' ? 'crosshair' : 'comment',
+            cursor: interactionMode === 'preview' ? 'crosshair' : 'comment',
             background:
-              interactionMode === 'select' ? 'rgba(59,130,246,0.05)' : 'rgba(255,255,0,0.05)',
+              interactionMode === 'preview' ? 'rgba(59,130,246,0.05)' : 'rgba(255,255,0,0.05)',
           }}
           onClick={(e) => {
             e.stopPropagation();

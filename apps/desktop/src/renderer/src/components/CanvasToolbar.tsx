@@ -97,9 +97,55 @@ export function CanvasToolbar({
       >
         Delete
       </button>
-      <span style={{ marginLeft: 12 }}>
-        {width.toFixed(0)} x {height.toFixed(0)}
-      </span>
+      {device === 'custom' ? (
+        <div style={{ display: 'flex', gap: 4, marginLeft: 12, alignItems: 'center' }}>
+          <input
+            type="number"
+            value={Math.round(width)}
+            onChange={(e) => {
+              e.stopPropagation();
+              const newWidth = Number(e.target.value) || 0;
+              onDeviceChange('custom');
+              // actualizamos solo width vía resize indirecto usando preset custom
+              // el resize real se maneja desde CanvasPane vía updateNode
+              (window as any).__canvasResizeWidth?.(newWidth);
+            }}
+            style={{
+              width: 64,
+              backgroundColor: '#333',
+              border: 'none',
+              borderRadius: 4,
+              color: 'white',
+              padding: '2px 4px',
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+          <span>x</span>
+          <input
+            type="number"
+            value={Math.round(height)}
+            onChange={(e) => {
+              e.stopPropagation();
+              const newHeight = Number(e.target.value) || 0;
+              onDeviceChange('custom');
+              (window as any).__canvasResizeHeight?.(newHeight);
+            }}
+            style={{
+              width: 64,
+              backgroundColor: '#333',
+              border: 'none',
+              borderRadius: 4,
+              color: 'white',
+              padding: '2px 4px',
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : (
+        <span style={{ marginLeft: 12 }}>
+          {width.toFixed(0)} x {height.toFixed(0)}
+        </span>
+      )}
     </div>
   );
 }

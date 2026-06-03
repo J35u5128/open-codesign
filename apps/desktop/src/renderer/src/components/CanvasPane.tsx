@@ -62,9 +62,9 @@ function CanvasNodeBox({
   function onDragStart(e: React.MouseEvent) {
     e.stopPropagation();
     if (e.button !== 0) return;
-    // Solo inicio drag con Ctrl, el resto de clics solo seleccionan el nodo.
-    // Así, la experiencia es como Figma/Stitch: click = select, Ctrl+drag = mover.
-    if (!(interactionMode === 'preview' && e.ctrlKey)) return;
+    // Ahora el modo que permite mover el nodo con Ctrl+drag es SELECT.
+    // PREVIEW queda reservado para interactuar con el contenido (iframe) sin mover el frame.
+    if (!(interactionMode === 'select' && e.ctrlKey)) return;
     setDragging(true);
     dragOrigin.current = { x: e.clientX, y: e.clientY };
   }
@@ -359,6 +359,20 @@ export function CanvasPane() {
   function handleNodeResize(id: string, size: { width: number; height: number }) {
     updateNode(id, { width: size.width, height: size.height });
   }
+
+  // Expone setters globales para CanvasToolbar "custom" input
+  (window as any).__canvasResizeWidth = (val: number) => {
+    const sel: CanvasNode | undefined = nodes.find((n) => n.id === selectedNodeId);
+    if (sel && sel.device === 'custom' && val > 0) {
+      updateNode(sel.id, { width: val });
+    }
+  };
+  (window as any).__canvasResizeHeight = (val: number) => {
+    const sel: CanvasNode | undefined = nodes.find((n) => n.id === selectedNodeId);
+    if (sel && sel.device === 'custom' && val > 0) {
+      updateNode(sel.id, { height: val });
+    }
+  };
 
   return (
     <div
