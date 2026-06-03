@@ -69,18 +69,31 @@ function CanvasNodeBox({
     dragOrigin.current = { x: e.clientX, y: e.clientY };
   }
 
+  // Cambia la posición SOLO al soltar el mouse (dragend), almacenando en refs durante el drag
+  const dragPos = useRef<{ x: number; y: number }>({ x: node.x, y: node.y });
+
   function onDragMove(e: MouseEvent) {
     if (!dragging || !dragOrigin.current) return;
     e.preventDefault();
     const deltaX = e.clientX - dragOrigin.current.x;
     const deltaY = e.clientY - dragOrigin.current.y;
     dragOrigin.current = { x: e.clientX, y: e.clientY };
-    onDrag(node.id, { x: node.x + deltaX, y: node.y + deltaY });
+    // Calcula y almacena nueva posición sin mutar el state aún
+    dragPos.current = { x: dragPos.current.x + deltaX, y: dragPos.current.y + deltaY };
+    // Mueve visualmente mientras se está arrastrando
+    if (boxRef.current) {
+      boxRef.current.style.left = `${dragPos.current.x}px`;
+      boxRef.current.style.top = `${dragPos.current.y}px`;
+    }
   }
 
   function onDragEnd() {
     setDragging(false);
     dragOrigin.current = null;
+    // Al soltar, actualiza la posición en zustand y resetea el ref visual
+    onDrag(node.id, dragPos.current);
+    // Resetea el ref para el próximo drag
+    dragPos.current = { x: node.x, y: node.y };
   }
 
   function onResizeStart(e: React.MouseEvent) {
@@ -109,6 +122,8 @@ function CanvasNodeBox({
 
   useEffect(() => {
     if (dragging) {
+      // Inicia desde la posición actual
+      dragPos.current = { x: node.x, y: node.y };
       window.addEventListener('mousemove', onDragMove);
       window.addEventListener('mouseup', onDragEnd);
       return () => {
@@ -116,7 +131,7 @@ function CanvasNodeBox({
         window.removeEventListener('mouseup', onDragEnd);
       };
     }
-  }, [dragging]);
+  }, [dragging, node.x, node.y]);
 
   useEffect(() => {
     if (resizeDragging) {
@@ -168,20 +183,25 @@ function CanvasNodeBox({
         touchAction: 'none',
       }}
     >
-      {/* Capa superior invisible para capturar selección y mostrar handle/resizer y toolbar */}
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 3,
-          inset: 0,
-          pointerEvents: 'auto',
-          background: 'transparent',
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(node.id);
-        }}
-      />
+      {/* Overlay para selección y manipulación del nodo.
+          ¡Importante!: en modo PREVIEW, el overlay NO debe renderizarse en absoluto,
+          ya que esto puede romper la interacción bubbling/captura real con el iframe.
+          Renderiza el overlay sólo en los modos select y comment. */}
+      {(interactionMode === 'select' || interactionMode === 'comment') && (
+        <div
+          style={{
+            position: 'absolute',
+            zIndex: 1001,
+            inset: 0,
+            pointerEvents: 'auto',
+            background: 'transparent',
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(node.id);
+          }}
+        />
+      )}
       <div style={{ width: '100%', height: '100%', position: 'relative', pointerEvents: 'none' }}>
         {children ? (
           <div
@@ -213,9 +233,10 @@ function CanvasNodeBox({
           </span>
         )}
       </div>
-      {selected ? (
+      {selected && node.device === 'custom' ? (
         <div
           onMouseDown={onResizeStart}
+          title="Arrastra para cambiar ancho/alto"
           style={{
             position: 'absolute',
             bottom: 4,
@@ -291,9 +312,17 @@ export function CanvasPane() {
   const [dragging, setDragging] = useState(false);
   const dragOrigin = useRef<{ x: number; y: number } | null>(null);
 
-  // Handle wheel zoom + pan
+  // Handle wheel zoom + pan.
+  // IMPORTANTE: en modo PREVIEW no interceptamos el wheel en absoluto,
+  // porque los eventos de scroll dentro de iframes NO burbujean correctamente
+  // y React termina bloqueando el scroll nativo si hacemos preventDefault.
   function onWheel(e: React.WheelEvent) {
+    if (interactionMode === 'preview') {
+      return; // deja scroll completamente nativo
+    }
+
     e.preventDefault();
+
     if (e.ctrlKey) {
       // Zoom
       const delta = -e.deltaY / 300;

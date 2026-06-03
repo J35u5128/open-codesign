@@ -50,18 +50,19 @@ export function DesignPreviewFrame({ width, height }: DesignPreviewFrameProps) {
           pointerEvents: interactionMode === 'select' ? 'none' : 'auto',
         }}
       />
-      {interactionMode !== 'select' ? (
+      {/* Overlay SOLO en modo comment.
+          En modo preview NO debe existir ninguna capa encima del iframe. */}
+      {interactionMode === 'comment' ? (
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            cursor: interactionMode === 'preview' ? 'crosshair' : 'comment',
-            background:
-              interactionMode === 'preview' ? 'rgba(59,130,246,0.05)' : 'rgba(255,255,0,0.05)',
+            cursor: 'comment',
+            background: 'rgba(255,255,0,0.05)',
           }}
           onClick={(e) => {
             e.stopPropagation();
-            console.log('Canvas interaction mode click:', interactionMode);
+            console.log('Canvas comment mode click');
           }}
         />
       ) : null}
