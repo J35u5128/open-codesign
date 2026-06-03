@@ -1,0 +1,392 @@
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+/* Eliminada importación de 'cn' porque no existe el módulo '../../utils/classnames' */
+import { type CanvasNode, useCanvasStore } from '../store/slices/canvas';
+import { CanvasToolbar } from './CanvasToolbar';
+import { DesignPreviewFrame } from './DesignPreviewFrame';
+
+// Utilidades para la rejilla cuadriculada
+const GRID_SIZE = 24;
+
+function CanvasBackground({ zoom }: { zoom: number }) {
+  // Usamos background CSS con dos lineas para crear grid cuadriculada
+  const size = GRID_SIZE * zoom;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        pointerEvents: 'none',
+        backgroundImage: `
+          linear-gradient(#2a2a2a 1px, transparent 1px),
+          linear-gradient(90deg, #2a2a2a 1px, transparent 1px)`,
+        backgroundSize: `${size}px ${size}px`,
+      }}
+    />
+  );
+}
+
+interface CanvasNodeBoxProps {
+  node: CanvasNode;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  onDrag: (id: string, pos: { x: number; y: number }) => void;
+  onResize: (id: string, size: { width: number; height: number }) => void;
+  children?: React.ReactNode;
+}
+
+function CanvasNodeBox({
+  node,
+  selected,
+  onSelect,
+  onDrag,
+  onResize,
+  children,
+}: CanvasNodeBoxProps) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null);
+  const [resizeDragging, setResizeDragging] = useState(false);
+  const resizeOrigin = useRef<{ x: number; y: number } | null>(null);
+  const startSize = useRef<{ width: number; height: number }>({
+    width: node.width,
+    height: node.height,
+  });
+
+  function onDragStart(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (e.button !== 0) return;
+    setDragging(true);
+    dragOrigin.current = { x: e.clientX, y: e.clientY };
+  }
+
+  function onDragMove(e: MouseEvent) {
+    if (!dragging || !dragOrigin.current) return;
+    e.preventDefault();
+    const deltaX = e.clientX - dragOrigin.current.x;
+    const deltaY = e.clientY - dragOrigin.current.y;
+    dragOrigin.current = { x: e.clientX, y: e.clientY };
+    onDrag(node.id, { x: node.x + deltaX, y: node.y + deltaY });
+  }
+
+  function onDragEnd() {
+    setDragging(false);
+    dragOrigin.current = null;
+  }
+
+  function onResizeStart(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (e.button !== 0) return;
+    setResizeDragging(true);
+    resizeOrigin.current = { x: e.clientX, y: e.clientY };
+    startSize.current = { width: node.width, height: node.height };
+  }
+
+  function onResizeMove(e: MouseEvent) {
+    if (!resizeDragging || !resizeOrigin.current) return;
+    e.preventDefault();
+    const deltaX = e.clientX - resizeOrigin.current.x;
+    const deltaY = e.clientY - resizeOrigin.current.y;
+    resizeOrigin.current = { x: e.clientX, y: e.clientY };
+    const newWidth = Math.max(50, startSize.current.width + deltaX);
+    const newHeight = Math.max(50, startSize.current.height + deltaY);
+    onResize(node.id, { width: newWidth, height: newHeight });
+  }
+
+  function onResizeEnd() {
+    setResizeDragging(false);
+    resizeOrigin.current = null;
+  }
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener('mousemove', onDragMove);
+      window.addEventListener('mouseup', onDragEnd);
+      return () => {
+        window.removeEventListener('mousemove', onDragMove);
+        window.removeEventListener('mouseup', onDragEnd);
+      };
+    }
+  }, [dragging]);
+
+  useEffect(() => {
+    if (resizeDragging) {
+      window.addEventListener('mousemove', onResizeMove);
+      window.addEventListener('mouseup', onResizeEnd);
+      return () => {
+        window.removeEventListener('mousemove', onResizeMove);
+        window.removeEventListener('mouseup', onResizeEnd);
+      };
+    }
+  }, [resizeDragging]);
+
+  return (
+    <div
+      ref={boxRef}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(node.id);
+      }}
+      onMouseDown={onDragStart}
+      style={{
+        position: 'absolute',
+        top: node.y,
+        left: node.x,
+        width: node.width,
+        height: node.height,
+        borderRadius: 4,
+        border: selected ? '2px solid #3b82f6' : '1px solid #666',
+        backgroundColor: selected ? 'rgba(59,130,246,0.1)' : '#222',
+        boxShadow: selected ? '0 0 8px rgba(59,130,246,0.5)' : undefined,
+        cursor: dragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: selected ? '#3b82f6' : '#aaa',
+        fontSize: 14,
+        fontWeight: selected ? '600' : '400',
+        textShadow: selected ? '0 0 2px rgba(59,130,246,0.6)' : 'none',
+        touchAction: 'none',
+      }}
+    >
+      <div style={{ width: '100%', height: '100%', position: 'relative', pointerEvents: 'none' }}>
+        {children ? (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'auto',
+              borderRadius: 2,
+              overflow: 'hidden',
+            }}
+          >
+            {children}
+          </div>
+        ) : (
+          <span
+            style={{
+              display: 'flex',
+              width: '100%',
+              height: '100%',
+              color: '#777',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+            }}
+          >
+            {node.title}
+          </span>
+        )}
+      </div>
+      {selected ? (
+        <div
+          onMouseDown={onResizeStart}
+          style={{
+            position: 'absolute',
+            bottom: 4,
+            right: 4,
+            width: 16,
+            height: 16,
+            backgroundColor: '#3b82f6',
+            cursor: 'nwse-resize',
+            borderRadius: 2,
+            touchAction: 'none',
+            zIndex: 2,
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function CanvasPane() {
+  const {
+    nodes,
+    selectedNodeId,
+    selectNode,
+    zoom,
+    offsetX,
+    offsetY,
+    setZoom,
+    setOffset,
+    updateNode,
+  } = useCanvasStore();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Selección del nodo activo
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+
+  function handleDuplicateSelected() {
+    if (!selectedNode) return;
+    const cloneId = `${selectedNode.id}-copy-${Date.now().toString(36)}`;
+    useCanvasStore.getState().addNode({
+      ...selectedNode,
+      id: cloneId,
+      x: selectedNode.x + 40,
+      y: selectedNode.y + 40,
+      isPrimary: false,
+    });
+    selectNode(cloneId);
+  }
+
+  function handleDeleteSelected() {
+    if (!selectedNode) return;
+    useCanvasStore.getState().removeNode(selectedNode.id);
+  }
+
+  function handleDeviceChange(device: 'mobile' | 'tablet' | 'desktop' | 'custom') {
+    if (!selectedNode) return;
+    // Configuración simple de presets
+    const presets = {
+      mobile: { width: 390, height: 844 },
+      tablet: { width: 768, height: 1024 },
+      desktop: { width: 1280, height: 720 },
+      custom: { width: selectedNode.width, height: selectedNode.height },
+    } as const;
+    const preset = presets[device];
+    updateNode(selectedNode.id, {
+      device,
+      width: preset.width,
+      height: preset.height,
+    });
+  }
+
+  // Control pan by dragging the background
+  const [dragging, setDragging] = useState(false);
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null);
+
+  // Handle wheel zoom + pan
+  function onWheel(e: React.WheelEvent) {
+    e.preventDefault();
+    if (e.ctrlKey) {
+      // Zoom
+      const delta = -e.deltaY / 300;
+      const newZoom = Math.min(Math.max(zoom + delta, 0.2), 3);
+      setZoom(newZoom);
+    } else {
+      // Pan
+      setOffset(offsetX - e.deltaX, offsetY - e.deltaY);
+    }
+  }
+
+  // Mouse drag pan handlers
+  function onMouseDown(e: React.MouseEvent) {
+    if (e.button !== 0) return;
+    if (e.target !== containerRef.current) return; // only background drag
+    setDragging(true);
+    dragOrigin.current = { x: e.clientX, y: e.clientY };
+  }
+  function onMouseMove(e: React.MouseEvent) {
+    if (!dragging || dragOrigin.current === null) return;
+
+    const deltaX = e.clientX - dragOrigin.current.x;
+    const deltaY = e.clientY - dragOrigin.current.y;
+    setOffset(offsetX + deltaX, offsetY + deltaY);
+
+    dragOrigin.current = { x: e.clientX, y: e.clientY };
+  }
+  function onMouseUp() {
+    setDragging(false);
+    dragOrigin.current = null;
+  }
+  function onClickBackground(e: React.MouseEvent) {
+    // Si el click viene de la toolbar (o sus hijos), no deseleccionar
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest?.('[data-canvas-toolbar-root="true"]')) {
+      return;
+    }
+    selectNode(null);
+  }
+
+  // Mock node inicial para visualizar el canvas con al menos un cuadro
+  useEffect(() => {
+    if (nodes.length === 0) {
+      // Añadir un nodo de prueba solo si está vacío
+      useCanvasStore.getState().addNode({
+        id: 'mock-1',
+        title: 'Design Principal',
+        x: 150,
+        y: 120,
+        width: 420,
+        height: 300,
+        device: 'desktop',
+        isPrimary: true,
+      });
+      selectNode('mock-1');
+    }
+  }, [nodes, selectNode]);
+
+  function handleNodeDrag(id: string, pos: { x: number; y: number }) {
+    updateNode(id, { x: pos.x, y: pos.y });
+  }
+
+  function handleNodeResize(id: string, size: { width: number; height: number }) {
+    updateNode(id, { width: size.width, height: size.height });
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onClick={onClickBackground}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#121212',
+        overflow: 'hidden',
+        userSelect: dragging ? 'none' : 'auto',
+        cursor: dragging ? 'grabbing' : 'grab',
+      }}
+    >
+      <CanvasBackground zoom={zoom} />
+      <div
+        style={{
+          position: 'absolute',
+          top: offsetY,
+          left: offsetX,
+          transform: `scale(${zoom})`,
+          transformOrigin: 'top left',
+          width: '100%',
+          height: '100%',
+          transition: dragging ? 'none' : 'transform 0.1s ease-out',
+        }}
+      >
+        {nodes.map((node) => (
+          <CanvasNodeBox
+            key={node.id}
+            node={node}
+            selected={selectedNodeId === node.id}
+            onSelect={selectNode}
+            onDrag={handleNodeDrag}
+            onResize={handleNodeResize}
+          >
+            <DesignPreviewFrame width={node.width} height={node.height} device={node.device} />
+          </CanvasNodeBox>
+        ))}
+        {selectedNode ? (
+          <CanvasToolbar
+            x={selectedNode.x}
+            y={selectedNode.y}
+            width={selectedNode.width}
+            height={selectedNode.height}
+            device={selectedNode.device}
+            onDeviceChange={handleDeviceChange}
+            onDuplicate={handleDuplicateSelected}
+            onDelete={handleDeleteSelected}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
