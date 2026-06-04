@@ -93,7 +93,12 @@ function createWindow(): void {
     autoHideMenuBar: process.platform !== 'darwin',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     backgroundColor: BRAND.backgroundColor,
-    icon: join(__dirname, '../../resources/icon.png'),
+    icon: join(
+      __dirname,
+      '../../resources',
+      process.platform === 'win32' ? 'icon.ico' : 'icon.png',
+    ),
+    title: '2Desing',
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
@@ -214,6 +219,15 @@ if (!IS_VITEST) {
 
     try {
       initLogger();
+
+      // Ensure the OS/app shell name is the desired brand name (Windows title bar / taskbar grouping).
+      // This is separate from BrowserWindow's `title` option.
+      app.setName('2Desing');
+      if (process.platform === 'win32') {
+        // A stable AppUserModelId helps Windows associate the process with the correct display name/icon.
+        // Keep it lowercase and reverse-DNS style.
+        app.setAppUserModelId('ai.opencowork.2desing');
+      }
       // Single-instance lock. Two simultaneous Electron instances would race
       // `cleanupStaleTmps` vs `writeAtomic` (B's cleanup unlinks A's in-flight
       // tmp → ENOENT rename) and collide on local JSON writes. macOS usually
@@ -344,7 +358,7 @@ if (!IS_VITEST) {
       // best-effort sync log and show a native three-button dialog.
       handleBootFailure(
         err,
-        'Open CoDesign failed to start',
+        '2Desing failed to start',
         'A startup error prevented the app from loading.',
       );
       app.quit();
