@@ -138,15 +138,23 @@ export function TweakPanel({
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const block: EditmodeBlock | null = useMemo(
-    () => (previewSource ? parseEditmodeBlock(previewSource) : null),
-    [previewSource],
-  );
+  const block: EditmodeBlock | null = useMemo(() => {
+    if (!previewSource) return null;
+    try {
+      return parseEditmodeBlock(previewSource);
+    } catch {
+      return null;
+    }
+  }, [previewSource]);
 
-  const schema: TweakSchema | null = useMemo(
-    () => (previewSource ? parseTweakSchema(previewSource) : null),
-    [previewSource],
-  );
+  const schema: TweakSchema | null = useMemo(() => {
+    if (!previewSource) return null;
+    try {
+      return parseTweakSchema(previewSource);
+    } catch {
+      return null;
+    }
+  }, [previewSource]);
   const sourceKey = useMemo(
     () => (previewSource ? stablePreviewSourceKey(previewSource) : ''),
     [previewSource],
