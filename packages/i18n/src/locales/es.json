@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "2Desing",
+    "appName": "2Design",
     "send": "Enviar",
     "cancel": "Cancelar",
     "retry": "Reintentar",
@@ -131,7 +131,7 @@
         },
         "summary": {
           "detecting": "Buscando una vista previa local en ejecución.",
-          "integrated": "Renderizando archivos del espacio de trabajo dentro de 2Desing.",
+          "integrated": "Renderizando archivos del espacio de trabajo dentro de 2Design.",
           "integratedBlocked": "Este espacio parece una app; usa su propio servidor de desarrollo para la vista previa.",
           "connected": "Mostrando {{url}}.",
           "waitingUrl": "Introduce la URL local de vista previa en ejecución.",
@@ -141,7 +141,7 @@
         },
         "hint": {
           "appWorkspace": "Los espacios de app suelen verse mejor en su propio servidor de desarrollo o ventana.",
-          "simpleWorkspace": "La vista integrada renderiza App.jsx o index.html dentro de 2Desing."
+          "simpleWorkspace": "La vista integrada renderiza App.jsx o index.html dentro de 2Design."
         },
         "placeholder": {
           "off": "La vista previa está desactivada para este espacio.",
@@ -381,7 +381,7 @@
         "apiKeyEditPlaceholder": "Dejar vacío para mantener {{mask}}",
         "defaultModel": "Modelo predeterminado",
         "compatibilityHintTitle": "Nota de compatibilidad",
-        "compatibilityHintBody": "Algunos planes de programación, servicios de retransmisión o pasarelas compatibles con OpenAI solo permiten clientes específicos como Claude Code, openclaw o Hermes. Incluso si la API parece compatible, 2Desing aún podría ser bloqueado por una lista de aplicaciones permitidas.",
+        "compatibilityHintBody": "Algunos planes de programación, servicios de retransmisión o pasarelas compatibles con OpenAI solo permiten clientes específicos como Claude Code, openclaw o Hermes. Incluso si la API parece compatible, 2Design aún podría ser bloqueado por una lista de aplicaciones permitidas.",
         "switchToManual": "Ingresar manualmente",
         "switchToDropdown": "Elegir de la lista",
         "discoveringModels": "Descubriendo modelos...",
@@ -536,7 +536,7 @@
       "logs": "Registros",
       "data": "Directorio de datos",
       "change": "Cambiar",
-      "restartHint": "Elige dónde guarda 2Desing la configuración, registros y datos de diseño locales. Los cambios se guardan permanentemente y se aplican después de reiniciar la aplicación.",
+      "restartHint": "Elige dónde guarda 2Design la configuración, registros y datos de diseño locales. Los cambios se guardan permanentemente y se aplican después de reiniciar la aplicación.",
       "locationSavedToast": "Ubicación de almacenamiento guardada. Reinicia la aplicación para aplicarla.",
       "locationSaveFailed": "No se pudo guardar la ubicación de almacenamiento",
       "onboardingTitle": "Bienvenida",
@@ -774,7 +774,7 @@
   "inlineComment": {
     "title": "Comentar en",
     "closeComposer": "Cerrar editor de comentarios en línea",
-    "description": "Los elementos cliqueados permanecen seleccionados en el lienzo. Describe el cambio visual o de contenido que quieres, y 2Desing reescribirá el artefacto sobre ese objetivo.",
+    "description": "Los elementos cliqueados permanecen seleccionados en el lienzo. Describe el cambio visual o de contenido que quieres, y 2Design reescribirá el artefacto sobre ese objetivo.",
     "placeholder": "Haz esta sección más compacta, resalta el título y alinéalo con el sistema de diseño vinculado…",
     "applying": "Aplicando…",
     "applyChange": "Aplicar cambio"
@@ -1027,7 +1027,7 @@
     "showLog": "Mostrar registro completo",
     "showLogFailed": "Error al abrir la carpeta de registros",
     "gatewayAllowlistHintTitle": "Este punto final puede restringir qué aplicaciones pueden conectarse",
-    "gatewayAllowlistHintBody": "Algunos planes de programación y pasarelas de conversión de protocolos mantienen una lista de aplicaciones permitidas. Incluso cuando anuncian una API compatible con OpenAI, podrían rechazar 2Desing a menos que esta app esté explícitamente permitida.",
+    "gatewayAllowlistHintBody": "Algunos planes de programación y pasarelas de conversión de protocolos mantienen una lista de aplicaciones permitidas. Incluso cuando anuncian una API compatible con OpenAI, podrían rechazar 2Design a menos que esta app esté explícitamente permitida.",
     "dismiss": "Descartar",
     "report": {
       "title": "Reportar un error",

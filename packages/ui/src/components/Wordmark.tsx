@@ -44,7 +44,7 @@ export function Wordmark({ badge, size = 'md' }: WordmarkProps) {
           }}
         >
           <span style={{ color: 'var(--color-text-primary)' }}>2</span>
-          <span style={{ color: 'var(--color-accent)' }}>Desing</span>
+          <span style={{ color: 'var(--color-accent)' }}>Design</span>
         </span>
         {badge ? (
           <span

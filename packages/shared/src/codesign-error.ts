@@ -8,6 +8,6 @@ export class CodesignError extends Error {
     options?: { cause?: unknown },
   ) {
     super(message, options);
-    this.name = 'CodesignError';
+    this.name = '2designError';
   }
 }

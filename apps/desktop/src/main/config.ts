@@ -12,11 +12,11 @@ import {
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 import { getActiveStorageLocations } from './storage-settings';
 
-const XDG_DEFAULT = join(homedir(), '.config', '2desing');
+const XDG_DEFAULT = join(homedir(), '.config', '2design');
 
 export function defaultConfigDir(): string {
   const xdg = process.env['XDG_CONFIG_HOME'];
-  if (xdg && xdg.length > 0) return join(xdg, '2desing');
+  if (xdg && xdg.length > 0) return join(xdg, '2design');
   return XDG_DEFAULT;
 }
 

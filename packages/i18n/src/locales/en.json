@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "2Desing",
+    "appName": "2Design",
     "send": "Send",
     "cancel": "Cancel",
     "retry": "Retry",
@@ -131,7 +131,7 @@
         },
         "summary": {
           "detecting": "Looking for a running local preview.",
-          "integrated": "Rendering workspace files inside 2Desing.",
+          "integrated": "Rendering workspace files inside 2Design.",
           "integratedBlocked": "This workspace looks like an app; use its own dev server for preview.",
           "connected": "Previewing {{url}}.",
           "waitingUrl": "Enter the running local preview URL.",
@@ -141,7 +141,7 @@
         },
         "hint": {
           "appWorkspace": "App workspaces usually preview best in their own dev server or app window.",
-          "simpleWorkspace": "Integrated preview renders App.jsx or index.html inside 2Desing."
+          "simpleWorkspace": "Integrated preview renders App.jsx or index.html inside 2Design."
         },
         "placeholder": {
           "off": "Preview is off for this workspace.",
@@ -434,7 +434,7 @@
         "apiKeyEditPlaceholder": "Leave empty to keep {{mask}}",
         "defaultModel": "Default model",
         "compatibilityHintTitle": "Compatibility note",
-        "compatibilityHintBody": "Some coding plans, relay services, or OpenAI-compatible gateways only allow specific clients such as Claude Code, openclaw, or Hermes. Even if the API looks compatible, 2Desing may still be blocked by an app allowlist.",
+        "compatibilityHintBody": "Some coding plans, relay services, or OpenAI-compatible gateways only allow specific clients such as Claude Code, openclaw, or Hermes. Even if the API looks compatible, 2Design may still be blocked by an app allowlist.",
         "switchToManual": "Enter manually",
         "switchToDropdown": "Pick from list",
         "discoveringModels": "Discovering models...",
@@ -590,7 +590,7 @@
       "logs": "Logs",
       "data": "Data directory",
       "change": "Change",
-      "restartHint": "Choose where 2Desing stores config, logs, and local design data. Changes are saved permanently and take effect after restarting the app.",
+      "restartHint": "Choose where 2Design stores config, logs, and local design data. Changes are saved permanently and take effect after restarting the app.",
       "workspaceHint": "Design workspace folders are managed per design from the Files panel. Changing these storage paths does not move or rebind existing workspace files.",
       "locationSavedToast": "Storage location saved. Restart the app to apply it.",
       "locationSaveFailed": "Could not save storage location",
@@ -829,7 +829,7 @@
   "inlineComment": {
     "title": "Comment on",
     "closeComposer": "Close inline comment composer",
-    "description": "Clicked elements stay selected in the canvas. Describe the visual or content change you want, and 2Desing will rewrite the artifact around that target.",
+    "description": "Clicked elements stay selected in the canvas. Describe the visual or content change you want, and 2Design will rewrite the artifact around that target.",
     "placeholder": "Make this section more compact, sharpen the headline, and align it with the linked design system…",
     "applying": "Applying…",
     "applyChange": "Apply change"
@@ -1083,7 +1083,7 @@
     "showLog": "Show full log",
     "showLogFailed": "Failed to open logs folder",
     "gatewayAllowlistHintTitle": "This endpoint may restrict which apps can connect",
-    "gatewayAllowlistHintBody": "Some coding plans and protocol-conversion gateways keep an app allowlist. Even when they advertise an OpenAI-compatible API, they may still reject 2Desing unless this app is explicitly allowed.",
+    "gatewayAllowlistHintBody": "Some coding plans and protocol-conversion gateways keep an app allowlist. Even when they advertise an OpenAI-compatible API, they may still reject 2Design unless this app is explicitly allowed.",
     "dismiss": "Dismiss",
     "report": {
       "title": "Report a bug",

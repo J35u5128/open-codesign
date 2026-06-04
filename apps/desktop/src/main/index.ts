@@ -52,11 +52,11 @@ const __dirname = dirname(__filename);
 let mainWindow: ElectronBrowserWindow | null = null;
 const getMainWindow = (): ElectronBrowserWindow | null => mainWindow;
 
-// Set the app name before any app.getPath() call so Electron uses '2desing'
+// Set the app name before any app.getPath() call so Electron uses '2design'
 // as the subdirectory name for userData and logs on all platforms.
-app.setName('2Desing');
+app.setName('2Design');
 if (process.platform === 'win32') {
-  app.setAppUserModelId('ai.opencowork.2desing');
+  app.setAppUserModelId('ai.opencowork.2design');
 }
 
 const IS_VITEST = process.env['VITEST'] === 'true';
@@ -105,7 +105,7 @@ function createWindow(): void {
       '../../resources',
       process.platform === 'win32' ? 'icon.ico' : 'icon.png',
     ),
-    title: '2Desing',
+    title: '2Design',
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),
@@ -228,7 +228,7 @@ if (!IS_VITEST) {
       initLogger();
 
       // app.setName() and setAppUserModelId() are now called at module level
-      // (before app.getPath('userData')) so that Electron uses '2desing' as
+      // (before app.getPath('userData')) so that Electron uses '2design' as
       // the subdirectory for userData and logs from the very first path call.
       // Single-instance lock. Two simultaneous Electron instances would race
       // `cleanupStaleTmps` vs `writeAtomic` (B's cleanup unlinks A's in-flight
@@ -360,7 +360,7 @@ if (!IS_VITEST) {
       // best-effort sync log and show a native three-button dialog.
       handleBootFailure(
         err,
-        '2Desing failed to start',
+        '2Design failed to start',
         'A startup error prevented the app from loading.',
       );
       app.quit();
