@@ -280,12 +280,59 @@ function readsTweakDefaultsAfterDeclaration(source: string): boolean {
   return false;
 }
 
+/**
+ * Strips ES module import/export syntax so the source can run inside a
+ * `new Function(...)` sandbox where there is no module loader.
+ */
+function stripEsModuleSyntax(source: string): string {
+  let out = source;
+
+  // Rewrite named/default imports from react and react-dom to globals
+  out = out.replace(
+    /import\s+(?:type\s+)?([\s\S]*?)\s+from\s+['"]([^'"]+)['"]\s*;?/g,
+    (_match: string, specifiers: string, mod: string) => {
+      const spec = specifiers.trim();
+      const m = mod.trim().toLowerCase();
+      if (m === 'react') {
+        if (/^\*\s+as\s+\w+$/.test(spec) || /^React$/.test(spec)) return '';
+        const both = spec.match(/^React\s*,\s*\{([^}]+)\}$/);
+        if (both?.[1]) return `const {${both[1].trim()}} = React;`;
+        const named = spec.match(/^\{([^}]+)\}$/);
+        if (named?.[1]) return `const {${named[1].trim()}} = React;`;
+        return '';
+      }
+      if (m === 'react-dom' || m === 'react-dom/client') {
+        const named = spec.match(/^\{([^}]+)\}$/);
+        if (named?.[1]) return `const {${named[1].trim()}} = ReactDOM;`;
+        return '';
+      }
+      // All other imports: strip silently
+      return '';
+    },
+  );
+
+  // Side-effect imports: import 'foo';
+  out = out.replace(/import\s+['"][^'"]+['"]\s*;?/g, '');
+
+  // export default → remove keyword pair
+  out = out.replace(/\bexport\s+default\s+/g, '');
+
+  // export { ... } or export { ... } from '...' → remove entirely
+  out = out.replace(/\bexport\s+\{[^}]*\}\s*(?:from\s+['"][^'"]+['"])?\s*;?/g, '');
+
+  // export function/const/let/var/class/async → strip the 'export' keyword
+  out = out.replace(/\bexport\s+((?:async\s+)?(?:function|const|let|var|class)\b)/g, '$1');
+
+  return out;
+}
+
 function compileAndRunScript(
   source: string,
   kind: 'jsx' | 'tsx',
   opts: { liveTweaks?: boolean } = {},
 ): string {
-  const runtimeSource = opts.liveTweaks ? bindEditmodeTokensToRuntime(source) : source;
+  const preprocessed = stripEsModuleSyntax(source);
+  const runtimeSource = opts.liveTweaks ? bindEditmodeTokensToRuntime(preprocessed) : preprocessed;
   const registerRunner =
     opts.liveTweaks === true && readsTweakDefaultsAfterDeclaration(source)
       ? `

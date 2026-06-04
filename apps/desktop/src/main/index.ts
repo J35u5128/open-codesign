@@ -52,6 +52,13 @@ const __dirname = dirname(__filename);
 let mainWindow: ElectronBrowserWindow | null = null;
 const getMainWindow = (): ElectronBrowserWindow | null => mainWindow;
 
+// Set the app name before any app.getPath() call so Electron uses '2desing'
+// as the subdirectory name for userData and logs on all platforms.
+app.setName('2Desing');
+if (process.platform === 'win32') {
+  app.setAppUserModelId('ai.opencowork.2desing');
+}
+
 const IS_VITEST = process.env['VITEST'] === 'true';
 const IS_SMOKE_TEST =
   process.argv.includes('--smoke-test') || process.env['CODESIGN_SMOKE_TEST'] === '1';
@@ -220,14 +227,9 @@ if (!IS_VITEST) {
     try {
       initLogger();
 
-      // Ensure the OS/app shell name is the desired brand name (Windows title bar / taskbar grouping).
-      // This is separate from BrowserWindow's `title` option.
-      app.setName('2Desing');
-      if (process.platform === 'win32') {
-        // A stable AppUserModelId helps Windows associate the process with the correct display name/icon.
-        // Keep it lowercase and reverse-DNS style.
-        app.setAppUserModelId('ai.opencowork.2desing');
-      }
+      // app.setName() and setAppUserModelId() are now called at module level
+      // (before app.getPath('userData')) so that Electron uses '2desing' as
+      // the subdirectory for userData and logs from the very first path call.
       // Single-instance lock. Two simultaneous Electron instances would race
       // `cleanupStaleTmps` vs `writeAtomic` (B's cleanup unlinks A's in-flight
       // tmp → ENOENT rename) and collide on local JSON writes. macOS usually
