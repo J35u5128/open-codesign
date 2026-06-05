@@ -1267,13 +1267,20 @@ export function registerSnapshotsIpc(db: Database): void {
       const requestedWorkspacePath = parseCreateDesignWorkspacePath(r);
       const design = runDb('create-design', () => createDesign(db, name));
       // v0.2: every design MUST have a workspace — per docs/v0.2-plan.md §2.3.
-      // When the user hasn't picked one explicitly, seed
-      //   <Documents>/CoDesign/<slug(name)>[-N]/
-      // and bind it. Collision suffix handles duplicate names.
+      // If the user picked a folder, create a subfolder with the design name.
+      // This ensures a physical directory exists for each design and allows
+      // multiple designs under the same root path.
       let autoWorkspacePath: string | null = null;
       try {
-        const workspacePath = requestedWorkspacePath ?? (await allocateDefaultWorkspacePath(name));
-        if (requestedWorkspacePath === undefined) {
+        let workspacePath: string;
+        if (requestedWorkspacePath !== undefined) {
+          // La ruta recibida YA es la carpeta final del proyecto.
+          // Ej: C:\Users\...\Documentos\Diseño aplicación 07
+          workspacePath = requestedWorkspacePath;
+          await mkdir(workspacePath, { recursive: true });
+        } else {
+          // Caso por defecto: sigue usando la raíz CoDesign automática.
+          workspacePath = await allocateDefaultWorkspacePath(name);
           autoWorkspacePath = workspacePath;
         }
         return await bindWorkspace(

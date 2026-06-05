@@ -1,3 +1,4 @@
+import path from 'path';
 import { useT } from '@open-codesign/i18n';
 import { FolderOpen } from 'lucide-react';
 import { useState } from 'react';
@@ -8,14 +9,20 @@ export function NewDesignDialog() {
   const open = useCodesignStore((s) => s.newDesignDialogOpen);
   const close = useCodesignStore((s) => s.closeNewDesignDialog);
   const createNewDesign = useCodesignStore((s) => s.createNewDesign);
+  const renameCurrentDesign = useCodesignStore((s) => s.renameCurrentDesign);
   const setView = useCodesignStore((s) => s.setView);
 
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState('');
   const [picking, setPicking] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string|null>(null);
 
   if (!open) return null;
 
+  // Eliminar función local renameCurrentDesign: usaremos directamente del store
+
+  // Le damos la vuelta: primero nombre, luego carpeta
   async function handlePickFolder() {
     if (!window.codesign?.snapshots?.pickWorkspaceFolder) return;
     setPicking(true);
@@ -27,17 +34,33 @@ export function NewDesignDialog() {
     }
   }
 
-  async function handleCreate(withPath: string | null) {
-    setCreating(true);
-    try {
-      const design = await createNewDesign(withPath);
-      close();
-      setSelectedPath(null);
-      if (design) setView('workspace');
-    } finally {
-      setCreating(false);
+  async function handleCreate() {
+    if (!selectedPath) { setError('Selecciona una carpeta válida.'); return; }
+    if (!projectName.trim()) { setError('El nombre del proyecto es obligatorio.'); return; }
+    setError(null);
+
+  setCreating(true);
+  try {
+    // Import estático de path arriba, no código quebrado dentro de la función
+    const finalFolder = path.join(selectedPath, projectName.trim());
+    const design = await createNewDesign(finalFolder);
+    // Si quieres forzar el nombre mostrado, sólo si difiere de la carpeta:
+    // if (design && projectName.trim() !== design.name) await renameCurrentDesign(projectName.trim());
+    close();
+    setSelectedPath(null);
+    setProjectName('');
+    setError(null);
+    if (design) setView('workspace');
+  } catch (e: any) {
+    if (e?.message?.includes('already bound')) {
+      setError('Ya existe un proyecto asociado a esa carpeta/nombre. Prueba otro nombre.');
+    } else {
+      setError('No se pudo crear el proyecto. Verifica la carpeta.');
     }
+  } finally {
+    setCreating(false);
   }
+}
 
   const busy = picking || creating;
 
@@ -45,63 +68,99 @@ export function NewDesignDialog() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t('canvas.newDesignDialog.title')}
+      aria-label="Crear proyecto de diseño"
       className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] animate-[overlay-in_120ms_ease-out]"
       onClick={(e) => {
         if (e.target === e.currentTarget && !busy) {
           close();
           setSelectedPath(null);
+          setProjectName('');
+          setError(null);
         }
       }}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && !busy) {
           close();
           setSelectedPath(null);
+          setProjectName('');
+          setError(null);
         }
       }}
     >
       <div
         role="document"
-        className="w-full max-w-sm rounded-[var(--radius-2xl)] bg-[var(--color-background)] border border-[var(--color-border)] shadow-[var(--shadow-elevated)] p-5 space-y-4 animate-[panel-in_160ms_ease-out]"
+        className="w-full max-w-sm rounded-2xl bg-[#fef8f3] border border-[#eddecd] shadow-lg p-6 space-y-5 animate-[panel-in_160ms_ease-out]"
       >
+        <div className="space-y-1 pb-3 border-b border-[var(--color-border)]">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Crear proyecto de diseño</h3>
+          <div className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+            Introduce el nombre de tu diseño y selecciona una carpeta donde se guardará.<br/>
+            <span className="font-semibold text-[#c96c42]">Ambos campos son obligatorios.</span>
+          </div>
+        </div>
+
         <div className="space-y-1">
-          <h3 className="text-[var(--text-md)] font-medium text-[var(--color-text-primary)]">
-            {t('canvas.newDesignDialog.title')}
-          </h3>
-          <p className="text-[var(--text-sm)] text-[var(--color-text-secondary)] leading-[var(--leading-body)]">
-            {t('canvas.newDesignDialog.subtitle')}
-          </p>
+          <label className="block text-sm font-medium text-[var(--color-text-primary)]">
+            {t('create.fields.name')}
+          </label>
+          <input
+            type="text"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder={t('create.fields.namePlaceholder')}
+            className="w-full rounded-md border border-[#eddecd] bg-[#fbf5ef] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[#bbab9a] focus:outline-none focus:ring-2 focus:ring-[#d39f8e] focus:border-transparent"
+            autoFocus
+          />
         </div>
 
-        <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-          <span className="flex-1 text-[var(--text-sm)] text-[var(--color-text-secondary)] font-mono truncate">
-            {selectedPath ?? t('canvas.newDesignDialog.noWorkspace')}
-          </span>
-          <button
-            type="button"
-            onClick={() => void handlePickFolder()}
-            disabled={busy}
-            className="flex items-center gap-1.5 shrink-0 h-7 px-2.5 rounded-[var(--radius-sm)] text-[var(--text-xs)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <FolderOpen className="size-3.5" />
-            {selectedPath ? t('canvas.workspace.change') : t('canvas.workspace.choose')}
-          </button>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+            Carpeta destino
+          </label>
+          <div className="flex items-center gap-2 rounded-md border border-[#eddecd] bg-[#fbf5ef] px-3 py-2 text-[var(--color-text-primary)] font-mono">
+            <span className="flex-grow truncate text-xs">
+              {selectedPath ?? 'Selecciona una carpeta'}
+            </span>
+            <button
+              type="button"
+              onClick={() => void handlePickFolder()}
+              disabled={busy}
+              className="flex items-center gap-1.5 shrink-0 h-7 px-2.5 rounded-md text-xs border border-[#d7c6b8] hover:bg-[#eaded5] hover:text-[#735241] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Elegir carpeta destino"
+            >
+              <FolderOpen className="size-4" />
+              Elegir
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2">
+        {error && (
+          <div className="bg-[#ffefec] border border-[#ffd2ce] text-[#c5482c] rounded-md px-3 py-2 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-2">
           <button
             type="button"
-            onClick={() => void handleCreate(null)}
+            onClick={() => {
+              if (!busy) {
+                close();
+                setSelectedPath(null);
+                setProjectName('');
+                setError(null);
+              }
+            }}
             disabled={busy}
-            className="h-9 px-3 rounded-[var(--radius-md)] text-[var(--text-sm)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="h-9 px-3 rounded-md text-sm text-[var(--color-text-secondary)] hover:bg-[#eaded5] hover:text-[#4e4034] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {t('canvas.newDesignDialog.skip')}
+            {t('common.cancel')}
           </button>
           <button
             type="button"
-            onClick={() => void handleCreate(selectedPath)}
-            disabled={busy}
-            className="h-9 px-3 rounded-[var(--radius-md)] bg-[var(--color-accent)] text-[var(--color-on-accent)] text-[var(--text-sm)] font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            onClick={() => void handleCreate()}
+            disabled={busy || !selectedPath || !projectName.trim()}
+            className="h-9 px-3 rounded-md bg-[#b54b22] text-[#fff4e6] text-sm font-semibold hover:bg-[#8f3518] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {t('canvas.newDesignDialog.confirm')}
           </button>
