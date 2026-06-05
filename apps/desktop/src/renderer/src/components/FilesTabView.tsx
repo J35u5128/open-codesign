@@ -546,129 +546,6 @@ function WorkspaceSection({ files }: { files: DesignFileEntry[] }) {
           )}
         </div>
       </div>
-
-      <div className="mt-[var(--space-3)] rounded-[var(--radius-md)] border border-[var(--color-border-muted)] bg-[var(--color-surface-raised)]">
-        <div className="flex min-w-0 items-center gap-[var(--space-2)] p-[var(--space-2)]">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border-muted)] text-[var(--color-text-muted)]">
-            <Globe2 className="h-3.5 w-3.5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-[var(--space-1)]">
-              <span className="text-[10px] font-medium uppercase tracking-[var(--tracking-label)] text-[var(--color-text-muted)]">
-                {t('canvas.workspace.preview.label')}
-              </span>
-              <span className="rounded-[var(--radius-pill)] border border-[var(--color-border-muted)] px-1.5 py-0.5 text-[9px] uppercase tracking-[var(--tracking-label)] text-[var(--color-text-secondary)]">
-                {previewConfigured
-                  ? t('canvas.workspace.preview.status.saved')
-                  : t('canvas.workspace.preview.status.auto')}
-                : {t(previewModeLabelKey(effectivePreviewMode))}
-              </span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleDetectPreview()}
-            disabled={disabled || savingPreview || detectingPreview || !workspacePath}
-            className="inline-flex h-7 shrink-0 items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 text-[10px] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-not-allowed disabled:opacity-50"
-            title={t('canvas.workspace.preview.detect')}
-          >
-            <RefreshCw
-              className={`h-3 w-3 ${detectingPreview ? 'animate-spin' : ''}`}
-              aria-hidden
-            />
-            {t('canvas.workspace.preview.detect')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewOptionsOpen((open) => !open)}
-            aria-expanded={previewOptionsOpen}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)]"
-            title={
-              previewOptionsOpen
-                ? t('canvas.workspace.preview.actions.hideOptions')
-                : t('canvas.workspace.preview.actions.showOptions')
-            }
-          >
-            <ChevronRight
-              className={`h-3.5 w-3.5 transition-transform ${previewOptionsOpen ? 'rotate-90' : ''}`}
-              aria-hidden
-            />
-          </button>
-        </div>
-        {previewOptionsOpen ? (
-          <div className="border-t border-[var(--color-border-muted)] p-[var(--space-2)]">
-            <div className="grid gap-[var(--space-2)]">
-              <p
-                className="m-0 text-[10px] leading-[var(--leading-body)] text-[var(--color-text-muted)]"
-                title={detectResult?.message ?? previewSummaryText}
-              >
-                {detectingPreview
-                  ? t('canvas.workspace.preview.summary.detecting')
-                  : (detectResult?.message ?? previewSummaryText)}
-              </p>
-              <label className="grid gap-1 text-[10px] uppercase tracking-[var(--tracking-label)] text-[var(--color-text-muted)]">
-                {t('canvas.workspace.preview.mode.label')}
-                <select
-                  value={previewModeInput}
-                  onChange={handlePreviewModeChange}
-                  disabled={disabled || savingPreview}
-                  className="h-8 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-background)] px-2 text-[11px] normal-case tracking-normal text-[var(--color-text-secondary)] outline-none transition-colors focus:border-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50"
-                  title={t(previewModeLabelKey(effectivePreviewMode))}
-                >
-                  <option value="managed-file" disabled={integratedPreviewBlocked}>
-                    {t('canvas.workspace.preview.mode.integrated')}
-                  </option>
-                  <option value="connected-url">
-                    {t('canvas.workspace.preview.mode.connectedUrl')}
-                  </option>
-                  <option value="external-app">
-                    {t('canvas.workspace.preview.mode.externalApp')}
-                  </option>
-                  <option value="none">{t('canvas.workspace.preview.mode.off')}</option>
-                </select>
-              </label>
-              {previewNeedsUrl ? (
-                <label className="grid gap-1 text-[10px] uppercase tracking-[var(--tracking-label)] text-[var(--color-text-muted)]">
-                  {t('canvas.workspace.preview.urlLabel')}
-                  <div className="flex min-w-0 items-center gap-[var(--space-1)]">
-                    <input
-                      value={previewUrlInput}
-                      onChange={(event) => setPreviewUrlInput(event.currentTarget.value)}
-                      onBlur={() => {
-                        if (previewModeInput === 'external-app' || normalizedPreviewUrl) {
-                          void handlePreviewUrlApply();
-                        }
-                      }}
-                      onKeyDown={handlePreviewUrlKeyDown}
-                      placeholder={t('canvas.workspace.preview.urlPlaceholder')}
-                      disabled={disabled || savingPreview}
-                      className={`h-8 min-w-0 flex-1 rounded-[var(--radius-sm)] border bg-[var(--color-background)] px-2 text-[11px] normal-case tracking-normal text-[var(--color-text-secondary)] outline-none transition-colors focus:border-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-50 ${
-                        previewUrlInvalid
-                          ? 'border-[var(--color-danger)]'
-                          : 'border-[var(--color-border)]'
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={handlePreviewUrlApply}
-                      disabled={disabled || savingPreview || previewUrlInvalid}
-                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--color-border)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)] disabled:cursor-not-allowed disabled:opacity-50"
-                      title={t('canvas.workspace.preview.apply')}
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                    </button>
-                  </div>
-                </label>
-              ) : null}
-              <p className="m-0 text-[10px] leading-[var(--leading-body)] text-[var(--color-text-muted)]">
-                {integratedPreviewBlocked
-                  ? t('canvas.workspace.preview.hint.appWorkspace')
-                  : t('canvas.workspace.preview.hint.simpleWorkspace')}
-              </p>
-            </div>
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
@@ -2142,9 +2019,10 @@ export function FilesTabView({ activePath = null }: { activePath?: string | null
             {fileTree.map((node) => renderFileTreeNode(node, 0))}
           </ul>
 
-          <p className="mt-[var(--space-6)] text-[11px] text-[var(--color-text-muted)] leading-[var(--leading-body)]">
+          {/* Preview hint removed for "Files" tab as per fix/remove-preview-option-in-files */}
+          {/* <p className="mt-[var(--space-6)] text-[11px] text-[var(--color-text-muted)] leading-[var(--leading-body)]">
             {t('canvas.previewHint')}
-          </p>
+          </p> */}
         </div>
       </aside>
       <div
