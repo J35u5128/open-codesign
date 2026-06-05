@@ -1,5 +1,5 @@
 appId: ai.opencowork.codesign
-productName: 2Desing
+productName: 2Design
 # Declare the publish target explicitly so electron-builder's updater-info
 # machinery (channels, provider, latest.yml) has something non-null to hang
 # on — otherwise NSIS packaging crashes with "Cannot read properties of null
