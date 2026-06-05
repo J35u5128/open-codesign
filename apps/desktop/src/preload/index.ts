@@ -289,7 +289,7 @@ export interface AgentStreamEvent {
     | 'error';
   designId: string;
   /** Trace ID linking this event to the main-process generation log entry.
-   *  Matches the generationId from the codesign:v1:generate payload — always
+   *  Matches the generationId from the 2design:v1:generate payload — always
    *  present because the main process supplies it from baseCtx. */
   generationId: string;
   // turn_start
@@ -394,7 +394,7 @@ export interface AskRequest {
 
 const api = {
   detectProvider: (key: string) =>
-    ipcRenderer.invoke('codesign:detect-provider', key) as Promise<string | null>,
+    ipcRenderer.invoke('2design:detect-provider', key) as Promise<string | null>,
   doneVerify: (artifact: string) =>
     ipcRenderer.invoke('done:verify:v1', { artifact }) as Promise<{
       errors: Array<{ message: string; source?: string; lineno?: number }>;
@@ -410,19 +410,19 @@ const api = {
     designId: string;
     previousSource?: string;
   }) =>
-    ipcRenderer.invoke('codesign:v1:generate', {
+    ipcRenderer.invoke('2design:v1:generate', {
       schemaVersion: 1,
       ...payload,
     } satisfies GeneratePayloadV1) as Promise<GenerateResponse>,
   cancelGeneration: (generationId: string) =>
-    ipcRenderer.invoke('codesign:v1:cancel-generation', {
+    ipcRenderer.invoke('2design:v1:cancel-generation', {
       schemaVersion: 1,
       generationId,
     } satisfies CancelGenerationPayloadV1),
   generationStatus: () =>
-    ipcRenderer.invoke('codesign:v1:generation-status') as Promise<GenerationStatusResult>,
+    ipcRenderer.invoke('2design:v1:generation-status') as Promise<GenerationStatusResult>,
   generateTitle: (prompt: string) =>
-    ipcRenderer.invoke('codesign:v1:generate-title', { prompt }) as Promise<string>,
+    ipcRenderer.invoke('2design:v1:generate-title', { prompt }) as Promise<string>,
   applyComment: (payload: {
     designId: string;
     generationId: string;
@@ -432,27 +432,27 @@ const api = {
     model?: ModelRef;
     referenceUrl?: string;
     attachments?: LocalInputFile[];
-  }) => ipcRenderer.invoke('codesign:apply-comment', payload) as Promise<GenerateResponse>,
+  }) => ipcRenderer.invoke('2design:apply-comment', payload) as Promise<GenerateResponse>,
   pickInputFiles: () =>
-    ipcRenderer.invoke('codesign:pick-input-files') as Promise<LocalInputFile[]>,
+    ipcRenderer.invoke('2design:pick-input-files') as Promise<LocalInputFile[]>,
   pickDesignSystemDirectory: () =>
-    ipcRenderer.invoke('codesign:pick-design-system-directory') as Promise<OnboardingState>,
+    ipcRenderer.invoke('2design:pick-design-system-directory') as Promise<OnboardingState>,
   clearDesignSystem: () =>
-    ipcRenderer.invoke('codesign:clear-design-system') as Promise<OnboardingState>,
+    ipcRenderer.invoke('2design:clear-design-system') as Promise<OnboardingState>,
   export: (payload: ExportInvokePayload) =>
-    ipcRenderer.invoke('codesign:export', payload) as Promise<ExportInvokeResponse>,
+    ipcRenderer.invoke('2design:export', payload) as Promise<ExportInvokeResponse>,
   locale: {
     getSystem: () => ipcRenderer.invoke('locale:get-system') as Promise<string>,
     getCurrent: () => ipcRenderer.invoke('locale:get-current') as Promise<string>,
     set: (locale: string) => ipcRenderer.invoke('locale:set', locale) as Promise<string>,
   },
-  checkForUpdates: () => ipcRenderer.invoke('codesign:check-for-updates'),
-  downloadUpdate: () => ipcRenderer.invoke('codesign:download-update'),
-  installUpdate: () => ipcRenderer.invoke('codesign:install-update'),
+  checkForUpdates: () => ipcRenderer.invoke('2design:check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('2design:download-update'),
+  installUpdate: () => ipcRenderer.invoke('2design:install-update'),
   onUpdateAvailable: (cb: (info: unknown) => void) => {
     const listener = (_e: unknown, info: unknown) => cb(info);
-    ipcRenderer.on('codesign:update-available', listener);
-    return () => ipcRenderer.removeListener('codesign:update-available', listener);
+    ipcRenderer.on('2design:update-available', listener);
+    return () => ipcRenderer.removeListener('2design:update-available', listener);
   },
   onboarding: {
     getState: () => ipcRenderer.invoke('onboarding:get-state') as Promise<OnboardingState>,
@@ -490,7 +490,7 @@ const api = {
     openFolder: (path: string) =>
       ipcRenderer.invoke('settings:v1:open-folder', path) as Promise<void>,
     openTemplatesFolder: () =>
-      ipcRenderer.invoke('codesign:v1:open-templates-folder') as Promise<void>,
+      ipcRenderer.invoke('2design:v1:open-templates-folder') as Promise<void>,
     resetOnboarding: () => ipcRenderer.invoke('settings:v1:reset-onboarding') as Promise<void>,
     toggleDevtools: () => ipcRenderer.invoke('settings:v1:toggle-devtools') as Promise<void>,
     validateKey: (input: {
@@ -633,36 +633,36 @@ const api = {
   },
   files: {
     list: (designId: string) =>
-      ipcRenderer.invoke('codesign:files:v1:list', {
+      ipcRenderer.invoke('2design:files:v1:list', {
         schemaVersion: 1,
         designId,
       }) as Promise<WorkspaceFileEntry[]>,
     listDir: (designId: string, path = '.') =>
-      ipcRenderer.invoke('codesign:files:v1:list-dir', {
+      ipcRenderer.invoke('2design:files:v1:list-dir', {
         schemaVersion: 1,
         designId,
         path,
       }) as Promise<WorkspaceDirectoryEntry[]>,
     read: (designId: string, path: string) =>
-      ipcRenderer.invoke('codesign:files:v1:read', {
+      ipcRenderer.invoke('2design:files:v1:read', {
         schemaVersion: 1,
         designId,
         path,
       }) as Promise<WorkspaceFileReadResult>,
     preview: (designId: string, path: string) =>
-      ipcRenderer.invoke('codesign:files:v1:preview', {
+      ipcRenderer.invoke('2design:files:v1:preview', {
         schemaVersion: 1,
         designId,
         path,
       }) as Promise<WorkspaceDocumentPreviewResult>,
     thumbnail: (designId: string, path: string) =>
-      ipcRenderer.invoke('codesign:files:v1:thumbnail', {
+      ipcRenderer.invoke('2design:files:v1:thumbnail', {
         schemaVersion: 1,
         designId,
         path,
       }) as Promise<WorkspaceDocumentThumbnailResult>,
     write: (designId: string, path: string, content: string) =>
-      ipcRenderer.invoke('codesign:files:v1:write', {
+      ipcRenderer.invoke('2design:files:v1:write', {
         schemaVersion: 1,
         designId,
         path,
@@ -675,24 +675,24 @@ const api = {
       blobs?: WorkspaceImportBlobInput[];
       timestamp?: string;
     }) =>
-      ipcRenderer.invoke('codesign:files:v1:import-to-workspace', {
+      ipcRenderer.invoke('2design:files:v1:import-to-workspace', {
         schemaVersion: 1,
         ...input,
       }) as Promise<WorkspaceImportResult[]>,
     subscribe: (designId: string) =>
-      ipcRenderer.invoke('codesign:files:v1:subscribe', {
+      ipcRenderer.invoke('2design:files:v1:subscribe', {
         schemaVersion: 1,
         designId,
       }) as Promise<{ ok: true }>,
     unsubscribe: (designId: string) =>
-      ipcRenderer.invoke('codesign:files:v1:unsubscribe', {
+      ipcRenderer.invoke('2design:files:v1:unsubscribe', {
         schemaVersion: 1,
         designId,
       }) as Promise<{ ok: true }>,
     onChanged: (cb: (event: { schemaVersion: 1; designId: string }) => void) => {
       const listener = (_e: unknown, event: { schemaVersion: 1; designId: string }) => cb(event);
-      ipcRenderer.on('codesign:files:v1:changed', listener);
-      return () => ipcRenderer.removeListener('codesign:files:v1:changed', listener);
+      ipcRenderer.on('2design:files:v1:changed', listener);
+      return () => ipcRenderer.removeListener('2design:files:v1:changed', listener);
     },
   },
   snapshots: {
@@ -900,7 +900,7 @@ const api = {
       }>,
   },
   openExternal: (url: string) =>
-    ipcRenderer.invoke('codesign:v1:open-external', url) as Promise<void>,
+    ipcRenderer.invoke('2design:v1:open-external', url) as Promise<void>,
   ask: {
     pending: () => ipcRenderer.invoke('ask:list-pending') as Promise<AskRequest[]>,
     onRequest: (cb: (req: AskRequest) => void) => {

@@ -6,19 +6,19 @@ import { getLogPath } from '../logger';
 import { isAllowedExternalUrl } from '../open-external';
 
 export function registerShellIpc(): void {
-  ipcMain.handle('codesign:open-log-folder', async () => {
+  ipcMain.handle('2design:open-log-folder', async () => {
     await shell.openPath(getLogPath());
   });
 
-  ipcMain.handle('codesign:v1:open-templates-folder', async () => {
+  ipcMain.handle('2design:v1:open-templates-folder', async () => {
     const dir = path_module.join(app.getPath('userData'), 'templates');
     await mkdir(dir, { recursive: true });
     await shell.openPath(dir);
   });
 
-  ipcMain.handle('codesign:v1:open-external', async (_e, url: unknown) => {
+  ipcMain.handle('2design:v1:open-external', async (_e, url: unknown) => {
     if (typeof url !== 'string') {
-      throw new CodesignError('codesign:v1:open-external requires a string url', 'IPC_BAD_INPUT');
+      throw new CodesignError('2design:v1:open-external requires a string url', 'IPC_BAD_INPUT');
     }
     if (!isAllowedExternalUrl(url)) {
       throw new CodesignError('URL not allowed', 'IPC_BAD_INPUT');

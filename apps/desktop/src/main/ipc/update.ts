@@ -18,7 +18,7 @@ export function setupAutoUpdater(getMainWindow: () => ElectronBrowserWindow | nu
   autoUpdater.autoDownload = false;
   autoUpdater.on('update-available', (info) => {
     pendingUpdateAvailable = info;
-    getMainWindow()?.webContents.send('codesign:update-available', info);
+    getMainWindow()?.webContents.send('2design:update-available', info);
   });
   autoUpdater.on('error', (err) => {
     const log = getLogger('main:updates');
@@ -32,7 +32,7 @@ export function setupAutoUpdater(getMainWindow: () => ElectronBrowserWindow | nu
       stack: err.stack,
     });
   });
-  ipcMain.handle('codesign:check-for-updates', () => autoUpdater.checkForUpdates());
-  ipcMain.handle('codesign:download-update', () => autoUpdater.downloadUpdate());
-  ipcMain.handle('codesign:install-update', () => autoUpdater.quitAndInstall());
+  ipcMain.handle('2design:check-for-updates', () => autoUpdater.checkForUpdates());
+  ipcMain.handle('2design:download-update', () => autoUpdater.downloadUpdate());
+  ipcMain.handle('2design:install-update', () => autoUpdater.quitAndInstall());
 }

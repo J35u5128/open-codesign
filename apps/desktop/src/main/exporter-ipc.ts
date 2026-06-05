@@ -144,7 +144,7 @@ export function buildDefaultExportPath(input: {
       input.format,
     );
   }
-  const design = sanitizeFilenamePart(input.designName ?? '') || 'open-codesign';
+  const design = sanitizeFilenamePart(input.designName ?? '') || '2design';
   const source =
     sanitizeFilenamePart(sourceStem(input.sourcePath ?? DEFAULT_SOURCE_ENTRY)) || 'App';
   const stamp = formatTimestamp(input.now ?? new Date());
@@ -221,7 +221,7 @@ export function registerExporterIpc(
   getWindow: () => BrowserWindow | null,
   db: Database | null = null,
 ): void {
-  ipcMain.handle('codesign:export', async (_evt, raw: unknown): Promise<ExportResponse> => {
+  ipcMain.handle('2design:export', async (_evt, raw: unknown): Promise<ExportResponse> => {
     const req = parseRequest(raw);
     const resolved = await resolveExportSource(req, { db });
     const win = getWindow();
@@ -274,7 +274,7 @@ function normalizeDefaultFilename(value: string): string {
   const normalized = value.trim().replace(/\\/g, '/');
   const basename = path.basename(normalized);
   const sanitized = sanitizeFilenamePart(basename);
-  return sanitized || 'open-codesign-export';
+  return sanitized || '2design-export';
 }
 
 function sanitizeFilenamePart(value: string): string {

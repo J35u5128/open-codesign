@@ -1780,13 +1780,13 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:list',
+    '2design:files:v1:list',
     async (_e: unknown, raw: unknown): Promise<WorkspaceFileEntry[]> => {
       if (typeof raw !== 'object' || raw === null) {
-        throw new CodesignError('codesign:files:v1:list expects { designId }', 'IPC_BAD_INPUT');
+        throw new CodesignError('2design:files:v1:list expects { designId }', 'IPC_BAD_INPUT');
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:list');
+      requireSchemaV1(r, '2design:files:v1:list');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -1821,16 +1821,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:list-dir',
+    '2design:files:v1:list-dir',
     async (_e: unknown, raw: unknown): Promise<WorkspaceDirectoryEntry[]> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:list-dir expects { designId, path }',
+          '2design:files:v1:list-dir expects { designId, path }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:list-dir');
+      requireSchemaV1(r, '2design:files:v1:list-dir');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -1869,16 +1869,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:read',
+    '2design:files:v1:read',
     async (_e: unknown, raw: unknown): Promise<WorkspaceFileReadResult> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:read expects { designId, path }',
+          '2design:files:v1:read expects { designId, path }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:read');
+      requireSchemaV1(r, '2design:files:v1:read');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -1915,16 +1915,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:preview',
+    '2design:files:v1:preview',
     async (_e: unknown, raw: unknown): Promise<WorkspaceDocumentPreviewResult> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:preview expects { designId, path }',
+          '2design:files:v1:preview expects { designId, path }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:preview');
+      requireSchemaV1(r, '2design:files:v1:preview');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -1967,16 +1967,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:thumbnail',
+    '2design:files:v1:thumbnail',
     async (_e: unknown, raw: unknown): Promise<WorkspaceDocumentThumbnailResult> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:thumbnail expects { designId, path }',
+          '2design:files:v1:thumbnail expects { designId, path }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:thumbnail');
+      requireSchemaV1(r, '2design:files:v1:thumbnail');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -2015,16 +2015,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:write',
+    '2design:files:v1:write',
     async (_e: unknown, raw: unknown): Promise<WorkspaceFileReadResult> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:write expects { designId, path, content }',
+          '2design:files:v1:write expects { designId, path, content }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:write');
+      requireSchemaV1(r, '2design:files:v1:write');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -2115,16 +2115,16 @@ export function registerWorkspaceIpc(db: Database, getWin: () => BrowserWindow |
   );
 
   ipcMain.handle(
-    'codesign:files:v1:import-to-workspace',
+    '2design:files:v1:import-to-workspace',
     async (_e: unknown, raw: unknown): Promise<WorkspaceImportResult[]> => {
       if (typeof raw !== 'object' || raw === null) {
         throw new CodesignError(
-          'codesign:files:v1:import-to-workspace expects { designId, source, files?, blobs? }',
+          '2design:files:v1:import-to-workspace expects { designId, source, files?, blobs? }',
           'IPC_BAD_INPUT',
         );
       }
       const r = raw as Record<string, unknown>;
-      requireSchemaV1(r, 'codesign:files:v1:import-to-workspace');
+      requireSchemaV1(r, '2design:files:v1:import-to-workspace');
       if (typeof r['designId'] !== 'string' || r['designId'].trim().length === 0) {
         throw new CodesignError('designId must be a non-empty string', 'IPC_BAD_INPUT');
       }
@@ -2216,7 +2216,7 @@ function parseIdPayload(raw: unknown, channel: string): string {
 
 /**
  * Stub channels installed when snapshots DB init fails at boot. Without these,
- * any renderer call to window.codesign.snapshots.* would surface as Electron's
+ * any renderer call to window['2design'].snapshots.* would surface as Electron's
  * generic "No handler registered for ..." rejection — opaque to the user and
  * to logs. We register handlers that throw a typed CodesignError so the
  * renderer can branch on `SNAPSHOTS_UNAVAILABLE` and surface a placeholder.
@@ -2241,15 +2241,15 @@ export const SNAPSHOTS_CHANNELS_V1 = [
   'snapshots:v1:workspace:check',
   'snapshots:v1:preview:update',
   'snapshots:v1:preview:detect',
-  'codesign:files:v1:list',
-  'codesign:files:v1:list-dir',
-  'codesign:files:v1:read',
-  'codesign:files:v1:preview',
-  'codesign:files:v1:thumbnail',
-  'codesign:files:v1:write',
-  'codesign:files:v1:import-to-workspace',
-  'codesign:files:v1:subscribe',
-  'codesign:files:v1:unsubscribe',
+  '2design:files:v1:list',
+  '2design:files:v1:list-dir',
+  '2design:files:v1:read',
+  '2design:files:v1:preview',
+  '2design:files:v1:thumbnail',
+  '2design:files:v1:write',
+  '2design:files:v1:import-to-workspace',
+  '2design:files:v1:subscribe',
+  '2design:files:v1:unsubscribe',
   'chat:v1:list',
   'chat:v1:append',
   'chat:v1:seed-from-snapshots',

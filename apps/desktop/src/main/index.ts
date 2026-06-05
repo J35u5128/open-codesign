@@ -125,7 +125,7 @@ function createWindow(): void {
 
   mainWindow.webContents.setWindowOpenHandler(({ url }: { url: string }) => {
     // Gate `window.open(...)` through the same allowlist as
-    // `codesign:v1:open-external`, otherwise any renderer path that triggers
+    // `2design:v1:open-external`, otherwise any renderer path that triggers
     // a new-window event could coerce the main process into opening an
     // attacker-controlled URL.
     if (isAllowedExternalUrl(url)) {
@@ -151,7 +151,7 @@ function createWindow(): void {
   mainWindow.webContents.on('did-finish-load', () => {
     const pending = getPendingUpdate();
     if (pending !== null) {
-      mainWindow?.webContents.send('codesign:update-available', pending);
+      mainWindow?.webContents.send('2design:update-available', pending);
     }
   });
 
@@ -327,7 +327,7 @@ if (!IS_VITEST) {
       if (IS_SMOKE_TEST) {
         bootLog.info('smoke.ok', { arch: process.arch, platform: process.platform });
         process.stdout.write(
-          `codesign smoke.ok arch=${process.arch} platform=${process.platform}\n`,
+          `2design smoke.ok arch=${process.arch} platform=${process.platform}\n`,
         );
         app.quit();
         return;
@@ -349,7 +349,7 @@ if (!IS_VITEST) {
     } catch (err) {
       if (IS_SMOKE_TEST) {
         process.stderr.write(
-          `codesign smoke.fail ${err instanceof Error ? err.stack || err.message : String(err)}\n`,
+          `2design smoke.fail ${err instanceof Error ? err.stack || err.message : String(err)}\n`,
         );
         app.exit(1);
         return;

@@ -16,9 +16,9 @@ import { isIgnoredWorkspacePath } from './workspace-reader';
  * events.
  *
  * Channels:
- *   - `codesign:files:v1:subscribe`   { schemaVersion: 1, designId } → { ok }
- *   - `codesign:files:v1:unsubscribe` { schemaVersion: 1, designId } → { ok }
- *   - `codesign:files:v1:changed`     (push) { schemaVersion: 1, designId }
+ *   - `2design:files:v1:subscribe`   { schemaVersion: 1, designId } → { ok }
+ *   - `2design:files:v1:unsubscribe` { schemaVersion: 1, designId } → { ok }
+ *   - `2design:files:v1:changed`     (push) { schemaVersion: 1, designId }
  *
  * One ref-counted watcher per designId. Started on first subscribe, kept
  * alive across short remounts via a 5-minute idle teardown timer. Bursts
@@ -126,7 +126,7 @@ function scheduleEmit(designId: string, getWin: () => BrowserWindow | null): voi
     entry.pendingEmit = null;
     const win = getWin();
     if (!win || win.isDestroyed()) return;
-    win.webContents.send('codesign:files:v1:changed', { schemaVersion: 1, designId });
+    win.webContents.send('2design:files:v1:changed', { schemaVersion: 1, designId });
   }, COALESCE_MS);
 }
 
@@ -235,7 +235,7 @@ function stopWatcher(designId: string): void {
 }
 
 export function registerFilesWatcherIpc(db: Database, getWin: () => BrowserWindow | null): void {
-  ipcMain.handle('codesign:files:v1:subscribe', (_e: unknown, raw: unknown): { ok: true } => {
+  ipcMain.handle('2design:files:v1:subscribe', (_e: unknown, raw: unknown): { ok: true } => {
     const designId = parseDesignId(raw, 'subscribe');
     const design = getDesign(db, designId);
     if (design === null) {
@@ -275,7 +275,7 @@ export function registerFilesWatcherIpc(db: Database, getWin: () => BrowserWindo
     return { ok: true };
   });
 
-  ipcMain.handle('codesign:files:v1:unsubscribe', (_e: unknown, raw: unknown): { ok: true } => {
+  ipcMain.handle('2design:files:v1:unsubscribe', (_e: unknown, raw: unknown): { ok: true } => {
     const designId = parseDesignId(raw, 'unsubscribe');
     const entry = watchers.get(designId);
     if (!entry) return { ok: true };
@@ -291,14 +291,14 @@ export function registerFilesWatcherIpc(db: Database, getWin: () => BrowserWindo
 function parseDesignId(raw: unknown, channel: string): string {
   if (typeof raw !== 'object' || raw === null) {
     throw new CodesignError(
-      `codesign:files:v1:${channel} expects { schemaVersion: 1, designId }`,
+      `2design:files:v1:${channel} expects { schemaVersion: 1, designId }`,
       'IPC_BAD_INPUT',
     );
   }
   const r = raw as Record<string, unknown>;
   if (r['schemaVersion'] !== 1) {
     throw new CodesignError(
-      `codesign:files:v1:${channel} requires schemaVersion: 1`,
+      `2design:files:v1:${channel} requires schemaVersion: 1`,
       'IPC_BAD_INPUT',
     );
   }

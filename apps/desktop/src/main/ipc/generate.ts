@@ -697,7 +697,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
       logIpc,
     );
 
-  ipcMain.handle('codesign:detect-provider', (_e, key: unknown) => {
+  ipcMain.handle('2design:detect-provider', (_e, key: unknown) => {
     if (typeof key !== 'string') {
       throw new CodesignError('detect-provider expects a string key', 'IPC_BAD_INPUT');
     }
@@ -719,7 +719,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
     return { errors };
   });
 
-  ipcMain.handle('codesign:v1:generate', async (_e, raw: unknown) => {
+  ipcMain.handle('2design:v1:generate', async (_e, raw: unknown) => {
     const payload = GeneratePayloadV1.parse(raw);
     const id = payload.generationId;
     return withRun(id, async () => {
@@ -1290,17 +1290,17 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
     });
   });
 
-  ipcMain.handle('codesign:v1:cancel-generation', (_e, raw: unknown) => {
+  ipcMain.handle('2design:v1:cancel-generation', (_e, raw: unknown) => {
     const { generationId } = CancelGenerationPayloadV1.parse(raw);
     cancelGenerationRequest(generationId, inFlight, logIpc, inFlightByDesign, inFlightByWorkspace);
   });
 
-  ipcMain.handle('codesign:v1:generation-status', () => ({
+  ipcMain.handle('2design:v1:generation-status', () => ({
     schemaVersion: 1 as const,
     running: listInFlightGenerations(inFlightByDesign),
   }));
 
-  ipcMain.handle('codesign:apply-comment', async (_e, raw: unknown) => {
+  ipcMain.handle('2design:apply-comment', async (_e, raw: unknown) => {
     const payload = ApplyCommentPayload.parse(raw);
     const id = payload.generationId;
     return withRun(id, async () => {
@@ -1451,7 +1451,7 @@ export function registerGenerateIpc({ db, getMainWindow }: RegisterGenerateIpcDe
     });
   });
 
-  ipcMain.handle('codesign:v1:generate-title', async (_e, raw: unknown): Promise<string> => {
+  ipcMain.handle('2design:v1:generate-title', async (_e, raw: unknown): Promise<string> => {
     const runId = crypto.randomUUID();
     return withRun(runId, async () => {
       if (typeof raw !== 'object' || raw === null) {

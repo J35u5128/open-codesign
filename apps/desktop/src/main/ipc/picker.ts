@@ -9,7 +9,7 @@ import { getOnboardingState, setDesignSystem } from '../onboarding-ipc';
 export function registerPickerIpc(getMainWindow: () => ElectronBrowserWindow | null): void {
   const logIpc = getLogger('main:ipc');
 
-  ipcMain.handle('codesign:pick-input-files', async () => {
+  ipcMain.handle('2design:pick-input-files', async () => {
     const win = getMainWindow();
     const result = win
       ? await dialog.showOpenDialog(win, {
@@ -31,7 +31,7 @@ export function registerPickerIpc(getMainWindow: () => ElectronBrowserWindow | n
     );
   });
 
-  ipcMain.handle('codesign:pick-design-system-directory', async () => {
+  ipcMain.handle('2design:pick-design-system-directory', async () => {
     const win = getMainWindow();
     const result = win
       ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
@@ -51,7 +51,7 @@ export function registerPickerIpc(getMainWindow: () => ElectronBrowserWindow | n
     return nextState;
   });
 
-  ipcMain.handle('codesign:clear-design-system', async () => {
+  ipcMain.handle('2design:clear-design-system', async () => {
     const nextState = await setDesignSystem(null);
     logIpc.info('designSystem.clear');
     return nextState;
