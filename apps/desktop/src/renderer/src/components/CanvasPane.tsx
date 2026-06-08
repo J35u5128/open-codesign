@@ -257,7 +257,8 @@ function CanvasNodeBox({
 
 export function CanvasPane() {
   const {
-    nodes,
+    nodesByProjectId,
+    activeProjectId,
     selectedNodeId,
     selectNode,
     zoom,
@@ -267,11 +268,25 @@ export function CanvasPane() {
     setZoom,
     setOffset,
     updateNode,
+    setActiveProjectId,
   } = useCanvasStore();
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Asegura que siempre haya un proyecto activo
+  useEffect(() => {
+    if (!activeProjectId) {
+      const newProjectId = `project-${Date.now().toString(36)}`;
+      setActiveProjectId(newProjectId);
+    }
+  }, [activeProjectId, setActiveProjectId]);
+
+  // Derivar nodos del proyecto activo
+  const nodes: CanvasNode[] = activeProjectId && nodesByProjectId[activeProjectId]
+    ? nodesByProjectId[activeProjectId]
+    : [];
+
   // Selección del nodo activo
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+  const selectedNode = selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) ?? null : null;
 
   // Mantener siempre el nodo seleccionado al cambiar a modo comment si había uno en select
   useEffect(() => {
@@ -282,9 +297,9 @@ export function CanvasPane() {
   }, [interactionMode, selectedNode, nodes, selectNode]);
 
   function handleDuplicateSelected() {
-    if (!selectedNode) return;
+    if (!selectedNode || !activeProjectId) return;
     const cloneId = `${selectedNode.id}-copy-${Date.now().toString(36)}`;
-    useCanvasStore.getState().addNode({
+    useCanvasStore.getState().addNode(activeProjectId, {
       ...selectedNode,
       id: cloneId,
       x: selectedNode.x + 40,
@@ -295,12 +310,14 @@ export function CanvasPane() {
   }
 
   function handleDeleteSelected() {
-    if (!selectedNode) return;
-    useCanvasStore.getState().removeNode(selectedNode.id);
+    if (!selectedNode || !activeProjectId) return;
+    useCanvasStore.getState().removeNode(activeProjectId, selectedNode.id);
+    // Desseleccionar nodo borrado para evitar que quede resaltado
+    selectNode(null);
   }
 
   function handleDeviceChange(device: 'mobile' | 'tablet' | 'desktop' | 'custom') {
-    if (!selectedNode) return;
+    if (!selectedNode || !activeProjectId) return;
     // Configuración simple de presets
     const presets = {
       mobile: { width: 390, height: 844 },
@@ -309,7 +326,7 @@ export function CanvasPane() {
       custom: { width: selectedNode.width, height: selectedNode.height },
     } as const;
     const preset = presets[device];
-    updateNode(selectedNode.id, {
+    updateNode(activeProjectId, selectedNode.id, {
       device,
       width: preset.width,
       height: preset.height,
@@ -373,9 +390,10 @@ export function CanvasPane() {
 
   // Mock node inicial para visualizar el canvas con al menos un cuadro
   useEffect(() => {
+    if (!activeProjectId) return;
     if (nodes.length === 0) {
-      // Añadir un nodo de prueba solo si está vacío
-      useCanvasStore.getState().addNode({
+      // Añadir un nodo de prueba solo si está vacío para el proyecto activo
+      useCanvasStore.getState().addNode(activeProjectId, {
         id: 'mock-1',
         title: 'Design Principal',
         x: 150,
@@ -388,27 +406,31 @@ export function CanvasPane() {
       });
       selectNode('mock-1');
     }
-  }, [nodes, selectNode]);
+  }, [nodes, selectNode, activeProjectId]);
 
   function handleNodeDrag(id: string, pos: { x: number; y: number }) {
-    updateNode(id, { x: pos.x, y: pos.y });
+    if (!activeProjectId) return;
+    updateNode(activeProjectId, id, { x: pos.x, y: pos.y });
   }
 
   function handleNodeResize(id: string, size: { width: number; height: number }) {
-    updateNode(id, { width: size.width, height: size.height });
+    if (!activeProjectId) return;
+    updateNode(activeProjectId, id, { width: size.width, height: size.height });
   }
 
   // Expone setters globales para CanvasToolbar "custom" input
   (window as any).__canvasResizeWidth = (val: number) => {
+    if (!activeProjectId) return;
     const sel: CanvasNode | undefined = nodes.find((n) => n.id === selectedNodeId);
     if (sel && sel.device === 'custom' && val > 0) {
-      updateNode(sel.id, { width: val });
+      updateNode(activeProjectId, sel.id, { width: val });
     }
   };
   (window as any).__canvasResizeHeight = (val: number) => {
+    if (!activeProjectId) return;
     const sel: CanvasNode | undefined = nodes.find((n) => n.id === selectedNodeId);
     if (sel && sel.device === 'custom' && val > 0) {
-      updateNode(sel.id, { height: val });
+      updateNode(activeProjectId, sel.id, { height: val });
     }
   };
 
