@@ -5,6 +5,13 @@ import { create } from 'zustand';
 
 export type CanvasDevice = 'mobile' | 'tablet' | 'desktop' | 'custom';
 
+export interface Comment {
+  id: string;
+  selector: string;
+  rect: { top: number; left: number; width: number; height: number };
+  text: string;
+}
+
 export interface CanvasNode {
   id: string;
   title: string;
@@ -14,6 +21,7 @@ export interface CanvasNode {
   height: number;
   device: CanvasDevice;
   isPrimary?: boolean;
+  comments: Comment[];
 }
 
 export type CanvasInteractionMode = 'preview' | 'select' | 'comment';
@@ -55,7 +63,17 @@ export const useCanvasStore = create<CanvasState>(((
     })),
   updateNode: (id: string, partial: Partial<CanvasNode>) =>
     set((state: CanvasState) => ({
-      nodes: state.nodes.map((n: CanvasNode) => (n.id === id ? { ...n, ...partial } : n)),
+      nodes: state.nodes.map((n: CanvasNode) =>
+        n.id === id
+          ? {
+              ...n,
+              ...partial,
+              comments: Array.isArray((partial as any).comments)
+                ? (partial as any).comments
+                : n.comments ?? [],
+            }
+          : n
+      ),
     })),
   selectNode: (id: string | null) => set(() => ({ selectedNodeId: id })),
   setZoom: (zoom: number) => set(() => ({ zoom })),
@@ -68,5 +86,38 @@ export const useCanvasStore = create<CanvasState>(((
       offsetX: 0,
       offsetY: 0,
       interactionMode: 'preview',
+    })),
+
+  addCommentToNode: (nodeId: string, comment: Comment) =>
+    set((state: CanvasState) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, comments: [...(n.comments ?? []), comment] }
+          : n
+      ),
+    })),
+
+  updateCommentOnNode: (nodeId: string, commentId: string, newText: string) =>
+    set((state: CanvasState) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              comments: n.comments?.map((c) => (c.id === commentId ? { ...c, text: newText } : c)),
+            }
+          : n
+      ),
+    })),
+
+  removeCommentFromNode: (nodeId: string, commentId: string) =>
+    set((state: CanvasState) => ({
+      nodes: state.nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              comments: n.comments?.filter((c) => c.id !== commentId),
+            }
+          : n
+      ),
     })),
 })) as StateCreator<CanvasState>);

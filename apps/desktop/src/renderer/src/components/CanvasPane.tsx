@@ -273,6 +273,14 @@ export function CanvasPane() {
   // Selección del nodo activo
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
 
+  // Mantener siempre el nodo seleccionado al cambiar a modo comment si había uno en select
+  useEffect(() => {
+    // Si al cambiar a modo 'comment' no hay seleccionado, selecciona el primero
+    if (interactionMode === 'comment' && !selectedNode && nodes.length > 0) {
+      selectNode(nodes[0].id);
+    }
+  }, [interactionMode, selectedNode, nodes, selectNode]);
+
   function handleDuplicateSelected() {
     if (!selectedNode) return;
     const cloneId = `${selectedNode.id}-copy-${Date.now().toString(36)}`;
@@ -376,6 +384,7 @@ export function CanvasPane() {
         height: 300,
         device: 'desktop',
         isPrimary: true,
+        comments: [],
       });
       selectNode('mock-1');
     }
@@ -445,6 +454,12 @@ export function CanvasPane() {
             onResize={handleNodeResize}
           >
             <DesignPreviewFrame width={node.width} height={node.height} device={node.device} />
+            {/* Comienzo de CommentsPanel funcional */}
+            {interactionMode === 'comment' && selectedNodeId === node.id && (
+              <CommentsPanel
+                comments={Array.isArray(node.comments) ? node.comments : []}
+              />
+            )}
           </CanvasNodeBox>
         ))}
         {selectedNode ? (
@@ -461,6 +476,172 @@ export function CanvasPane() {
         ) : null}
       </div>
       <CanvasModeBar />
+    </div>
+  );
+}
+
+// Definición de tipos y componente CommentsPanel fuera del export principal
+
+type Comment = {
+  id: string;
+  selector: string;
+  rect: { top: number; left: number; width: number; height: number };
+  text: string;
+};
+
+function CommentsPanel({ comments: initialComments }: { comments: Comment[] }) {
+  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  // Detecta cuando debe cambiar a editar un nuevo id y precarga texto
+  useEffect(() => {
+    if (editingId) {
+      const comment = comments.find(c => c.id === editingId);
+      setEditText(comment?.text ?? '');
+    } else {
+      setEditText('');
+    }
+  }, [editingId, comments]);
+
+  function updateComment(id: string, newText: string) {
+    setComments((prev) =>
+      prev.map(c => c.id === id ? { ...c, text: newText } : c)
+    );
+    setEditingId(null);
+  }
+
+  function deleteComment(id: string) {
+    setComments((prev) => prev.filter(c => c.id !== id));
+    setEditingId(null);
+  }
+
+  if (comments.length === 0) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          right: -250,
+          top: 10,
+          width: 220,
+          background: '#222e3c',
+          color: '#fff',
+          borderRadius: 8,
+          padding: 12,
+          boxShadow: '0 4px 32px rgba(0,0,0,0.19)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <h4 style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>Comentarios</h4>
+        <div style={{ fontSize: 12, color: '#bcc', fontStyle: 'italic' }}>
+          Este nodo no tiene comentarios.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        right: -250,
+        top: 10,
+        width: 220,
+        background: '#222e3c',
+        color: '#fff',
+        borderRadius: 8,
+        padding: 12,
+        boxShadow: '0 4px 32px rgba(0,0,0,0.19)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <h4 style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>Comentarios</h4>
+      {comments.map((comment) => (
+        <div
+          key={comment.id}
+          onClick={() => setEditingId(comment.id)}
+          style={{
+            cursor: 'pointer',
+            borderRadius: 6,
+            padding: '4px 8px',
+            backgroundColor: editingId === comment.id ? '#3b82f6' : '#1e293b',
+            fontSize: 12,
+            userSelect: 'none',
+          }}
+        >
+          {editingId === comment.id ? (
+            <>
+              <textarea
+                style={{
+                  width: '100%',
+                  height: 60,
+                  fontSize: 12,
+                  borderRadius: 4,
+                  padding: 6,
+                  resize: 'vertical',
+                }}
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+              />
+              <div style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                <button
+                  disabled={!editText.trim()}
+                  onClick={() => updateComment(comment.id, editText.trim())}
+                  style={{
+                    borderRadius: 6,
+                    padding: '4px 8px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    backgroundColor: '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                  }}
+                >
+                  Guardar
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  style={{
+                    borderRadius: 6,
+                    padding: '4px 8px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    backgroundColor: '#737373',
+                    color: 'white',
+                    border: 'none',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => deleteComment(comment.id)}
+                  style={{
+                    borderRadius: 6,
+                    padding: '4px 8px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    backgroundColor: '#dc2626',
+                    color: 'white',
+                    border: 'none',
+                  }}
+                >
+                  Borrar
+                </button>
+              </div>
+            </>
+          ) : (
+            comment.text
+          )}
+        </div>
+      ))}
     </div>
   );
 }
