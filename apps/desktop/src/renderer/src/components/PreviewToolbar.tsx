@@ -93,6 +93,7 @@ export function PreviewToolbar(): ReactElement {
 
   return (
     <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-[var(--space-1)] pr-[var(--space-4)] py-[3px]">
+      {/* Dimensions desplegable oculto temporalmente
       <div className="flex items-center gap-2 mr-4">
         <label htmlFor="viewport-selector" className="text-xs text-[var(--color-text-secondary)]">
           Dimensions:
@@ -108,12 +109,15 @@ export function PreviewToolbar(): ReactElement {
           <option value="mobile">Mobile</option>
         </select>
       </div>
+      */}
+
       {toastMessage && (
         <output className="mr-auto text-[var(--text-xs)] text-[var(--color-text-secondary)] truncate max-w-[60%]">
           {toastMessage}
         </output>
       )}
 
+      {/* Botón Modo comentario oculto temporalmente
       <button
         type="button"
         disabled={disabled}
@@ -128,7 +132,9 @@ export function PreviewToolbar(): ReactElement {
         <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
         {t('preview.commentMode')}
       </button>
+      */}
 
+      {/* Desplegable Ajustar 62% oculto temporalmente
       <div className="relative" ref={zoomRef}>
         <button
           type="button"
@@ -181,6 +187,7 @@ export function PreviewToolbar(): ReactElement {
           </div>
         )}
       </div>
+      */}
 
       <div className="relative" ref={ref}>
         <button
